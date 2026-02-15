@@ -1,129 +1,28 @@
 # Terra Invicta Advisory System - Feature Roadmap
 
-This file tracks design ideas and optimizations to be implemented after core system is operational.
+This file tracks design ideas and features to be implemented.
+
+**Last Updated:** 2026-02-15
 
 ---
 
-## Template Optimization
+## Implementation Status
 
-**Status:** Planned  
-**Priority:** Medium  
-**Complexity:** Medium
+### ✅ Completed (Session 3)
 
-**Current State:**
-- Templates read directly from game install (no copying)
-- All fields loaded raw from JSON
-- No filtering or optimization
+**Unified Build System**
+- Single `terractl.py` script (1060 lines, 7 commands)
+- SQLite-based data pipeline (game_templates.db + savegame_*.db)
+- <1s full pipeline (build + parse + inject)
+- OS-specific configuration (.env.linux.dist, .env.win.dist)
+- Interactive install with path auto-detection
+- Safety checks (Python 3.11+, .gitignore protection, validate command)
 
-**Goal:**
-Optimize template data for advisor consumption while preserving operational information.
-
-**Approach:**
-1. **Profile actual advisor usage** - determine which fields each advisor domain actually uses
-2. **Create per-template optimization rules** - filter unnecessary fields
-3. **Denormalize cross-references** - embed related data to eliminate lookups
-4. **Build optimized versions** - output to `build/templates/*.json`
-
-**Example Optimizations:**
-
-### TISpaceBodyTemplate.json
-**Keep:**
-- Identity: `dataName`, `displayName`, `objectType`
-- Location: `barycenterName` (parent body)
-- Orbital mechanics: ALL Kepler elements (needed for launch window calculations)
-  - `semiMajorAxis_km`, `eccentricity`, `inclination_Deg`
-  - `longAscendingNode_Deg`, `argPeriapsis_Deg`, `meanAnomalyAtEpoch_Deg`
-  - `epoch_floatJYears`
-- Physical: `mass_kg`, `equatorialRadius_km`, `density_gcm3`
-- Operational: `orbits[]`, `habSites[]`, `maxHabSize`
-- Environment: `atmosphere`, `irradiatedMultiplier`
-
-**Remove:**
-- Rendering: `modelResource`, `modelScale`, `symbolTexture`, `altModels`
-- Display cosmetics: `angularDiameterMultiplier`, `rotationOffset_Deg`
-- Internal calculations: `Hill Radius in km`, `Hill radius pass-fail`
-- Duplicate fields: `friendlyName` (use `displayName`), `friendlyDiameter` (use `equatorialRadius_km * 2`)
-
-**Denormalize:**
-- `habSites[]`: Instead of array of strings `["LunaSite1", ...]`, embed full hab site data:
-  ```json
-  "habSites": [
-    {
-      "dataName": "LunaSite1",
-      "displayName": "Mare Tranquillitatis",
-      "miningProfile": {
-        "dataName": "Volatiles_Rich",
-        "resources": {"water": 8, "metals": 12, "nobles": 3},
-        "extraction_rate": 1.2
-      },
-      "baseResources": {...},
-      "coordinates": {...}
-    }
-  ]
-  ```
-- Eliminates need for separate HabSite and MiningProfile lookups
-
-**Rationale:**
-- Launch windows require precise orbital mechanics (discovered during design)
-- Advisors need operational data, not rendering metadata
-- Denormalization trades file size for query speed (no lookups)
-
-### TIHabSiteTemplate.json
-**Status:** May become obsolete if fully denormalized into SpaceBody
-
-**If kept separate:**
-- Keep: `dataName`, `displayName`, `body`, `miningProfile`, `baseResources`, `coordinates`
-- Remove: Redundant fields already in parent SpaceBody
-
-### TIMiningProfileTemplate.json
-**Keep:**
-- `dataName`, `displayName`
-- Resource yields and extraction rates
-- Efficiency modifiers
-
-**Remove:**
-- UI display metadata
-
-### TITraitTemplate.json
-**Keep:**
-- `dataName`, `displayNameKey`, `descriptionKey`
-- Mechanical effects (all stat modifiers)
-- Conditions and restrictions
-
-**Remove:**
-- UI sorting metadata
-- Flavor text not needed for decision-making
-
-### TICouncilorTypeTemplate.json
-**Keep:**
-- `dataName`, `displayNameKey`
-- `classChance[]` (trait compatibility)
-- Stat base values
-
-**Remove:**
-- UI display preferences
-
-**Implementation Notes:**
-- Create optimization rules only after profiling real advisor queries
-- Preserve ALL operational/scientific data (learned from orbital mechanics case)
-- When in doubt, keep the field (disk space is cheap, missing data is expensive)
-- Document why each field is kept/removed
-- Version optimization rules with game version (1.0.0 template structure may differ from 1.1.0)
-
----
-
-## Build Process Enhancements
-
-**Status:** Planned  
-**Priority:** Low  
-**Complexity:** Low
-
-**Ideas:**
-- Incremental builds (only rebuild changed files)
-- Parallel processing for large template sets
-- Build validation (schema checking on output)
-- Compression of build artifacts
-- Source maps (map optimized data back to original template fields)
+**Data Pipeline**
+- Game templates → SQLite (5MB, queryable)
+- Savegames → SQLite (13MB, dated snapshots)
+- Context generation → generated/mistral_context.txt (4KB, inspectable)
+- File-based context for debuggability (rejected in-memory streaming)
 
 ---
 
@@ -134,84 +33,258 @@ Optimize template data for advisor consumption while preserving operational info
 **Complexity:** Medium
 
 **Current State:**
-- Actor specs define tier 1/2/3 scope in markdown
+- Actor specs define tier 1/2/3 scope in TOML
 - No actual prompt files created yet
+- Context generation is generic
 
 **Goal:**
-Create 18 prompt files (6 actors × 3 tiers) that enforce tier knowledge boundaries.
+Create tier-aware prompt templates that enforce knowledge boundaries.
 
 **Structure:**
 ```
 src/prompts/
-├── lin_tier1.txt
-├── lin_tier2.txt
-├── lin_tier3.txt
-├── valentina_tier1.txt
-└── ... (18 files total)
+├── tier1.txt    # Basic operations template
+├── tier2.txt    # Strategic operations template
+├── tier3.txt    # Global operations template
+└── actor_overlays/
+    ├── chuck.txt
+    ├── valentina.txt
+    └── ... (7 files)
 ```
 
 **Each prompt includes:**
-- Actor personality and background
-- Domain expertise
 - Tier-specific knowledge scope (what they CAN discuss)
 - Tier restrictions (what they CANNOT discuss)
+- Actor personality overlay (injected on top of tier template)
 - Response style and tone
 - Example queries and responses
 
 **Implementation:**
-- Extract tier scopes from actor markdown specs
-- Create templated prompts with variable tier knowledge
-- Build process validates prompts against actor specs
-- Runtime loads appropriate tier prompt based on current global tier
+1. Extract tier scopes from actor TOML specs
+2. Create tier templates with variable knowledge boundaries
+3. Build process validates prompts against actor specs
+4. Runtime combines: tier template + actor overlay + game context
+5. Update `cmd_inject()` to use tier-aware templates
+
+**Rationale:**
+- Separate tier knowledge from actor personality
+- Reusable tier templates across all actors
+- Actor overlays are small deltas on top of tier baseline
+- Easier to maintain than 21 separate prompts (7 actors × 3 tiers)
 
 ---
 
-## Runtime Version Checking
+## CODEX Script-Based Tier Evaluation
 
 **Status:** Planned  
-**Priority:** Medium  
-**Complexity:** Low
+**Priority:** High (blocks tier progression)  
+**Complexity:** Medium
 
 **Current State:**
-- `build/.buildinfo` records game version
-- No runtime validation yet
+- CODEX role defined in actor specs
+- Manual tier setting in .env (CURRENT_TIER=1)
+- No automatic tier calculation
 
 **Goal:**
-Scripts check game version before using build artifacts.
+Implement deterministic tier readiness calculation based on game state.
+
+**Tier Unlock Conditions:**
+
+**Tier 2 (60-70%):** Meet 2 of 5 conditions
+1. Operative on Luna or Mars mine
+2. Operative on Earth shipyard
+3. 10+ MC
+4. Control 3+ space stations
+5. Member of 3+ nation federation
+
+**Tier 3 (70%+):** Meet 3 of 6 conditions
+1. Control orbital ring or space elevator
+2. Fleet in Jupiter system or beyond
+3. 25+ MC
+4. Control 10+ habs
+5. Federation of 5+ major powers
+6. Councilor-level mission success rate >80%
 
 **Implementation:**
 ```python
-# In codex_inject.py and other runtime scripts:
+# New command: python terractl.py evaluate --date YYYY-M-D
 
-def check_build_version(env):
-    """Verify build artifacts match current game version"""
-    buildinfo_path = Path(env['BUILD_DIR']) / '.buildinfo'
-    
-    if not buildinfo_path.exists():
-        print("⚠ WARNING: No build artifacts found. Run 'python3 scripts/build.py' first.")
-        return False
-    
-    with open(buildinfo_path) as f:
-        buildinfo = json.load(f)
-    
-    build_version = buildinfo['game_version']
-    current_version = env['GAME_VERSION']
-    
-    if build_version != current_version:
-        print(f"⚠ WARNING: Build artifacts from game v{build_version}, current game is v{current_version}")
-        print("  Template data may have changed. Recommend rebuilding:")
-        print("  python3 scripts/build.py")
-        response = input("Continue anyway? [y/N] ")
-        return response.lower() == 'y'
-    
-    return True
+def cmd_evaluate(args):
+    """Evaluate tier readiness from savegame"""
+    # Parse savegame DB
+    # Calculate conditions met
+    # Compute readiness percentage
+    # Output: generated/tier_state.json
+    # Update CURRENT_TIER in .env if threshold crossed
+```
+
+**Output Format:**
+```json
+{
+  "date": "2027-7-14",
+  "current_tier": 1,
+  "readiness": 0.45,
+  "tier2_conditions": {
+    "luna_mars_mine": true,
+    "earth_shipyard": false,
+    "mc_10plus": true,
+    "stations_3plus": false,
+    "federation_3plus": false
+  },
+  "tier2_met": 2,
+  "tier2_needed": 2,
+  "tier2_unlocked": true,
+  "recommendation": "Tier 2 available - strategic operations now accessible"
+}
 ```
 
 **Features:**
-- Detects version mismatch
-- Warns user of potential issues
-- Allows override (user decision)
-- Suggests rebuild command
+- Script-based calculation (~0.01s, not LLM)
+- Deterministic (same savegame = same result)
+- Structured output (no hallucination)
+- Auto-updates .env CURRENT_TIER
+- Shows progress toward next tier
+
+---
+
+## Domain Routing Automation
+
+**Status:** Planned  
+**Priority:** Medium  
+**Complexity:** Medium
+
+**Current State:**
+- Actor specs define domain keywords in TOML
+- No automatic routing implementation
+- User manually selects advisor
+
+**Goal:**
+Implement automatic advisor selection based on query content.
+
+**Approach:**
+
+**Phase 1: Simple keyword matching**
+```python
+def route_query(query: str, actors: dict) -> list[str]:
+    """Select 1-2 advisors based on query keywords"""
+    scores = {}
+    for name, spec in actors.items():
+        domain = spec['domain_primary']
+        keywords = spec.get('domain_keywords', [])
+        score = sum(1 for kw in keywords if kw.lower() in query.lower())
+        if score > 0:
+            scores[name] = score
+    
+    # Return top 1-2 advisors
+    sorted_advisors = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    return [name for name, _ in sorted_advisors[:2]]
+```
+
+**Phase 2: Embedding-based (future)**
+- Use sentence embeddings for semantic similarity
+- Match query against domain descriptions
+- Better handling of synonyms and related concepts
+
+**User Override:**
+- `@chuck what's your take on this?` → Force Chuck response
+- `@valentina @lin discuss this` → Multi-advisor conversation
+- No @ prefix → Auto-route based on content
+
+**Multi-Domain Handling:**
+- Single domain detected → 1 advisor responds
+- Multiple domains → 2 advisors respond (conversation format)
+- No clear domain → CODEX responds (meta-level routing)
+
+---
+
+## Context Extraction Extensions
+
+**Status:** Planned  
+**Priority:** Medium  
+**Complexity:** Low-Medium
+
+**Current State:**
+- Context includes: actors, Luna/Mars hab sites
+- ~4KB total
+- Many gamestate keys unused
+
+**Goal:**
+Extract comprehensive game state for advisor queries.
+
+**Additional Data to Extract:**
+
+**From game_templates.db:**
+- All hab sites (not just Luna/Mars)
+- Tech tree with prerequisites
+- Councilor traits with effects
+- Space bodies with orbital parameters
+- Station/platform templates
+
+**From savegame_*.db:**
+- Faction standings and control points
+- Councilor roster with traits/stats/missions
+- Space fleets with composition and location
+- Nation control and federation membership
+- Current research progress
+- Resource stockpiles
+- Active missions
+
+**Implementation:**
+- Extend `cmd_inject()` with additional queries
+- Organize by advisor domain (e.g., Chuck sees covert ops data)
+- Keep total context under 16K tokens (current: 4KB ≈ 1K tokens)
+- Allow 10-15KB for full extraction
+
+**Selective Loading (future):**
+- Only load data relevant to current query
+- Cache full context, inject subset per query
+- Reduces token usage for simple questions
+
+---
+
+## Performance Monitoring
+
+**Status:** Planned  
+**Priority:** Low  
+**Complexity:** Low
+
+**Goal:**
+Track actual system performance vs design targets.
+
+**Metrics to Track:**
+- Build time (target: <1s)
+- Parse time (target: <0.5s)
+- Inject time (target: <0.02s)
+- Full pipeline time (target: <2s)
+- Context size (target: <16KB)
+- Token generation rate (target: >30 tok/s)
+
+**Implementation:**
+```python
+# Add to terractl.py
+
+import time
+
+def timed_command(func):
+    """Decorator to time command execution"""
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start
+        logging.info(f"Command completed in {elapsed:.2f}s")
+        return result
+    return wrapper
+
+@timed_command
+def cmd_build(args):
+    # existing implementation
+    pass
+```
+
+**Logging:**
+- Append timing data to logs/performance.log
+- Track trends over time
+- Alert if exceeding thresholds
 
 ---
 
@@ -221,145 +294,126 @@ def check_build_version(env):
 **Priority:** Low  
 **Complexity:** Low
 
-**Current State:**
-- Actor fluff has opener/reaction pools
-- No full conversation examples
-
 **Goal:**
-Create example conversations showing:
-- Actor personality in practice
-- Tier 1 vs Tier 2 vs Tier 3 response differences
-- Multi-advisor interactions
-- Spectator behavior examples
-- Error handling scenarios
+Document example conversations showing system behavior.
 
-**Location:** `src/actors/actor_*_examples.md` (separate from fluff)
+**Location:** `docs/examples/`
+
+**Files:**
+```
+docs/examples/
+├── tier1_basic.md       # Tier 1 conversations
+├── tier2_strategic.md   # Tier 2 conversations
+├── tier3_global.md      # Tier 3 conversations
+├── multi_advisor.md     # Multiple advisors discussing
+├── spectator.md         # Spectator reactions
+└── edge_cases.md        # Error handling, boundary cases
+```
+
+**Each example includes:**
+- User query
+- Selected advisor(s)
+- Full response
+- Notes on tier boundaries, personality, domain routing
 
 **Purpose:**
 - Development reference
 - Prompt engineering validation
 - User documentation
-- Quality assurance
+- Quality assurance baseline
 
 ---
 
-## Domain Routing Automation
-
-**Status:** Planned  
-**Priority:** High (blocks full automation)  
-**Complexity:** Medium
-
-**Current State:**
-- Actor specs define domain keywords manually
-- No automatic routing implementation
-
-**Goal:**
-Implement automatic advisor selection based on query content.
-
-**Approach:**
-1. Extract domain keywords from actor specs
-2. Build keyword → advisor mapping
-3. NLP-based query classification
-4. Handle multi-domain queries (select 1-2 advisors)
-5. User override: "Ask Lin: ..." forces specific advisor
-
-**Implementation:**
-```python
-def route_query(query: str, actors: List[Dict]) -> List[str]:
-    """
-    Determine which advisors should respond to query
-    
-    Returns list of 1-2 advisor names
-    """
-    # Simple keyword matching initially
-    # Can enhance with embeddings/classification later
-    pass
-```
-
----
-
-## Performance Monitoring
-
-**Status:** Planned  
-**Priority:** Medium  
-**Complexity:** Low
-
-**Goal:**
-Track actual system performance vs 5s target.
-
-**Metrics:**
-- Total response time (end-to-end)
-- Component breakdown (routing, loading, LLM gen, formatting)
-- Context window usage
-- Token generation rate
-- Memory consumption
-
-**Implementation:**
-- Logging decorators on key functions
-- Performance dashboard (optional)
-- Alerts when exceeding 5s budget
-
----
-
-## CODEX Script-Based Evaluation
-
-**Status:** Planned  
-**Priority:** High (blocks tier unlocks)  
-**Complexity:** Medium
-
-**Current State:**
-- CODEX role defined in actor specs
-- No actual evaluation implementation
-
-**Goal:**
-Implement deterministic tier readiness calculation.
-
-**Requirements:**
-- Parse savegame for tier conditions (mines, shipyards, MC, federations)
-- Calculate 2-of-5 unlock conditions
-- Compute readiness percentage
-- Output structured report (not LLM-generated)
-
-**Implementation:**
-- Extend `codex_inject.py` or create `codex_evaluate.py`
-- Script-based calculation (~0.1s, not 1-2s LLM call)
-- Format structured output template
-- Save tier state to `generated/tier_state.json`
-
----
-
-## Director/Validation System
+## Validation & Quality Assurance
 
 **Status:** Idea  
 **Priority:** Low  
 **Complexity:** High
 
 **Concept:**
-Meta-layer that validates advisor responses for:
-- In-character consistency
-- Tier boundary compliance
-- Factual accuracy vs game data
-- Response quality
+Meta-layer that validates advisor responses for quality.
+
+**Validation Checks:**
+- In-character consistency (personality matches actor spec)
+- Tier boundary compliance (no knowledge leakage)
+- Factual accuracy vs game data (numbers match templates/savegame)
+- Domain appropriateness (advisor stayed in their domain)
+- Response length (concise vs verbose per spec)
 
 **Potential Implementation:**
-- Second LLM pass after response generation
-- Validates against actor specs and tier rules
-- Flags out-of-character or incorrect responses
-- Could use smaller/faster model for validation
 
-**Open Questions:**
-- Performance impact (adds latency)
-- Value vs complexity trade-off
-- Whether prompt engineering can achieve same quality without validation
+**Option 1: Second LLM pass (expensive)**
+- Generate response with primary LLM
+- Validate with secondary LLM call
+- Pro: Flexible, catches subtle issues
+- Con: 2x latency, 2x cost
+
+**Option 2: Rule-based validation (cheap)**
+- Check response against hard rules
+- Regex for forbidden terms (tier leakage)
+- Fact-check numbers against DB
+- Pro: Fast, deterministic
+- Con: Limited, can't catch nuance
+
+**Option 3: Prompt engineering (free)**
+- Strengthen prompts to prevent issues
+- Use examples and negative examples
+- Iterate on prompts until quality is consistent
+- Pro: No runtime cost
+- Con: Takes more upfront work
+
+**Recommendation:** Start with Option 3, add Option 2 if needed, avoid Option 1 unless critical.
+
+---
+
+## Advanced Features (Lower Priority)
+
+### Real-Time Savegame Monitoring
+- Watch saves directory for new .gz files
+- Auto-parse and inject on change
+- Notify when new context available
+- Complexity: Medium, Priority: Low
+
+### Web Interface
+- Browser-based chat with advisors
+- Visual context inspection
+- Tier progression dashboard
+- Complexity: High, Priority: Low
+
+### Multi-Campaign Management
+- Track multiple campaigns simultaneously
+- Switch between campaigns easily
+- Compare campaigns side-by-side
+- Complexity: Medium, Priority: Low
+
+### Voice Integration
+- TTS for advisor responses (different voices per actor)
+- STT for voice queries
+- Immersive RP experience
+- Complexity: High, Priority: Low
+
+---
+
+## Technical Debt & Refactoring
+
+**None identified.** Current architecture is clean:
+- Single 1060-line script (manageable)
+- Clear separation of concerns (commands)
+- Comprehensive safety checks
+- Good documentation
+
+**Future considerations:**
+- If terractl.py exceeds 2000 lines, consider splitting
+- If command count exceeds 10, create command modules
+- Keep performance <1s for core pipeline
 
 ---
 
 ## Notes
 
-- Features listed in approximate priority order
+- Features listed by implementation status, then priority
 - Complexity estimates: Low (1-2 days), Medium (3-5 days), High (1-2 weeks)
-- Revisit and update as development progresses
-- Some features may be abandoned if not needed
+- Tier system (prompts + evaluation) is critical path
+- Context extraction can be incremental
+- Quality assurance via prompting preferred over validation overhead
 - New features discovered during development should be added here
-
-**Last Updated:** 2026-02-14

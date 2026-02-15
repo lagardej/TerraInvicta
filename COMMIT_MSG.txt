@@ -1,26 +1,20 @@
-Add safety checks and validation command
-
-Safety features:
-- Python 3.11+ version check at startup
-- .gitignore verification in install command
-- Auto-add .env to .gitignore if missing
-- validate command tests all configuration paths
-
-Features:
-- ADD cmd_validate() - comprehensive path validation
-  - Checks game installation + templates directory
-  - Checks saves directory + counts savegames
-  - Checks KoboldCpp executable + model file
-  - Verifies .gitignore protection for .env
-  - Clear pass/fail/warning reporting
+Update FEATURES.md roadmap to reflect current implementation
 
 Changes:
-- terractl.py: +130 lines (version check + validate + gitignore)
-- Python 3.11+ enforced (tomllib requirement)
-- install command now ensures .gitignore safety
-- validate command catches config errors before build
-- README.md: document validate command
+- Mark completed features (unified build system, SQLite pipeline, safety checks)
+- Update technical specs (1060 lines, 7 commands, <1s pipeline)
+- Revise tier prompts approach (tier templates + actor overlays)
+- Add CODEX tier evaluation specification with unlock conditions
+- Expand context extraction roadmap (full gamestate coverage)
+- Document domain routing phases (keyword → embedding)
+- Add performance monitoring implementation
+- Reorganize by status (completed → planned → ideas)
+- Remove outdated sections (template optimization superseded by SQLite)
 
-Usage:
-  python terractl.py install   # Auto-adds .env to .gitignore
-  python terractl.py validate  # Test config before build
+Status:
+- Completed: Build system, data pipeline, OS configs, safety
+- High Priority: Tier prompts, CODEX evaluation, domain routing
+- Medium Priority: Context extraction, performance monitoring
+- Low Priority: Examples, validation, advanced features
+
+Next: Implement tier-specific prompt system
