@@ -1,20 +1,32 @@
-Update FEATURES.md roadmap to reflect current implementation
+Add performance monitoring system
+
+Features:
+- ADD @timed_command decorator for automatic timing
+- ADD logs/performance.log CSV tracking (timestamp, command, elapsed, status)
+- ADD cmd_perf() - performance statistics report
+  - Min/Avg/Max/P95 timing per command
+  - Failure count tracking
+  - Threshold violation warnings (>1.0s)
+  - Performance targets displayed
+
+Targets:
+- build: <1.0s (template + DB creation)
+- parse: <0.5s (savegame decompression)
+- inject: <0.02s (context generation)
+- validate: <0.5s (path checking)
+
+Implementation:
+- All commands decorated except run (external process)
+- CSV format for easy parsing/analysis
+- Automatic tracking (no user action required)
+- Human-readable report with terractl.py perf
 
 Changes:
-- Mark completed features (unified build system, SQLite pipeline, safety checks)
-- Update technical specs (1060 lines, 7 commands, <1s pipeline)
-- Revise tier prompts approach (tier templates + actor overlays)
-- Add CODEX tier evaluation specification with unlock conditions
-- Expand context extraction roadmap (full gamestate coverage)
-- Document domain routing phases (keyword → embedding)
-- Add performance monitoring implementation
-- Reorganize by status (completed → planned → ideas)
-- Remove outdated sections (template optimization superseded by SQLite)
+- terractl.py: +120 lines (decorator + log function + perf command)
+- 8 commands total (added perf)
+- Performance data persists across runs
+- README.md: document perf command
 
-Status:
-- Completed: Build system, data pipeline, OS configs, safety
-- High Priority: Tier prompts, CODEX evaluation, domain routing
-- Medium Priority: Context extraction, performance monitoring
-- Low Priority: Examples, validation, advanced features
-
-Next: Implement tier-specific prompt system
+Usage:
+  python terractl.py build    # Automatically timed and logged
+  python terractl.py perf     # View statistics

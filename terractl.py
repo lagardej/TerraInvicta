@@ -26,6 +26,57 @@ if sys.version_info < (3, 11):
     sys.exit(1)
 
 # ============================================================================
+# PERFORMANCE MONITORING
+# ============================================================================
+
+import time
+import functools
+
+def timed_command(func):
+    """Decorator to time command execution and log performance"""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        command_name = func.__name__.replace('cmd_', '')
+        start_time = time.time()
+        
+        try:
+            result = func(*args, **kwargs)
+            elapsed = time.time() - start_time
+            
+            # Log to performance log
+            log_performance(command_name, elapsed, success=True)
+            
+            # Console output
+            if elapsed > 1.0:
+                logging.warning(f"Performance: {command_name} took {elapsed:.2f}s (threshold: 1.0s)")
+            else:
+                logging.debug(f"Performance: {command_name} completed in {elapsed:.3f}s")
+            
+            return result
+            
+        except Exception as e:
+            elapsed = time.time() - start_time
+            log_performance(command_name, elapsed, success=False, error=str(e))
+            raise
+    
+    return wrapper
+
+def log_performance(command: str, elapsed: float, success: bool = True, error: str = None):
+    """Append performance metrics to performance log"""
+    log_dir = Path(__file__).parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    perf_log = log_dir / "performance.log"
+    
+    timestamp = datetime.now().isoformat()
+    status = "SUCCESS" if success else "FAILED"
+    
+    with open(perf_log, 'a') as f:
+        if error:
+            f.write(f"{timestamp},{command},{elapsed:.3f},{status},{error}\n")
+        else:
+            f.write(f"{timestamp},{command},{elapsed:.3f},{status}\n")
+
+# ============================================================================
 # LOGGING SETUP
 # ============================================================================
 
@@ -97,6 +148,7 @@ def prompt_path(message: str, default: str = None) -> str:
                 return user_input
             print("  Path required. Please try again.")
 
+@timed_command
 def cmd_install(args):
     """Interactive setup - auto-detect paths and create .env"""
     import platform
@@ -229,6 +281,7 @@ def cmd_install(args):
 # CLEAN COMMAND
 # ============================================================================
 
+@timed_command
 def cmd_clean(args):
     """Remove build directory"""
     import shutil
@@ -517,6 +570,7 @@ def create_templates_db(build_dir: Path, templates_dir: Path):
     
     logging.info(f"OK Created game database: {db_path}")
 
+@timed_command
 def cmd_build(args):
     """Build game templates database"""
     env = load_env()
@@ -571,6 +625,7 @@ def find_savegame(saves_dir: Path, date_str: str) -> Path:
     
     return matches[0]
 
+@timed_command
 def cmd_parse(args):
     """Parse savegame to database"""
     env = load_env()
@@ -639,6 +694,7 @@ def load_actors(src_dir: Path) -> dict:
     
     return actors
 
+@timed_command
 def cmd_inject(args):
     """Generate LLM context"""
     project_root = Path(__file__).parent
@@ -708,6 +764,7 @@ def cmd_inject(args):
 # VALIDATE COMMAND
 # ============================================================================
 
+@timed_command
 def cmd_validate(args):
     """Validate configuration and paths"""
     print("Terra Invicta Advisory System - Configuration Validation")
@@ -826,6 +883,7 @@ def cmd_validate(args):
 # RUN COMMAND
 # ============================================================================
 
+# Note: run command not timed (launches external KoboldCpp process)
 def cmd_run(args):
     """Launch KoboldCpp"""
     # Generate context first
@@ -880,6 +938,76 @@ def cmd_run(args):
     subprocess.run(cmd, cwd=kobold_dir)
 
 # ============================================================================
+# PERF COMMAND
+# ============================================================================
+
+def cmd_perf(args):
+    """Display performance statistics"""
+    import csv
+    from collections import defaultdict
+    
+    print("Terra Invicta Advisory System - Performance Report")
+    print("="*60)
+    
+    project_root = Path(__file__).parent
+    perf_log = project_root / "logs" / "performance.log"
+    
+    if not perf_log.exists():
+        print("\nNo performance data available.")
+        print("Performance tracking started automatically with this version.")
+        return
+    
+    # Parse performance log
+    stats = defaultdict(list)
+    failures = defaultdict(int)
+    
+    with open(perf_log) as f:
+        for line in f:
+            parts = line.strip().split(',')
+            if len(parts) < 4:
+                continue
+            
+            timestamp, command, elapsed, status = parts[:4]
+            elapsed = float(elapsed)
+            
+            stats[command].append(elapsed)
+            if status == "FAILED":
+                failures[command] += 1
+    
+    if not stats:
+        print("\nNo performance data available.")
+        return
+    
+    # Display statistics
+    print("\nCommand Performance:")
+    print(f"{'Command':<12} {'Count':<8} {'Min':<10} {'Avg':<10} {'Max':<10} {'P95':<10} {'Failures'}")
+    print("-" * 75)
+    
+    for command in sorted(stats.keys()):
+        times = sorted(stats[command])
+        count = len(times)
+        min_time = min(times)
+        avg_time = sum(times) / count
+        max_time = max(times)
+        p95_idx = int(count * 0.95)
+        p95_time = times[p95_idx] if p95_idx < count else max_time
+        fails = failures.get(command, 0)
+        
+        # Highlight slow commands
+        warning = "!" if avg_time > 1.0 else " "
+        
+        print(f"{warning}{command:<11} {count:<8} {min_time:<10.3f} {avg_time:<10.3f} {max_time:<10.3f} {p95_time:<10.3f} {fails}")
+    
+    # Performance targets
+    print("\n" + "="*60)
+    print("Performance Targets:")
+    print("  build:    <1.0s   (template + DB creation)")
+    print("  parse:    <0.5s   (savegame decompression + DB insert)")
+    print("  inject:   <0.02s  (context generation)")
+    print("  validate: <0.5s   (path checking)")
+    print("\nThreshold violations marked with !")
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -894,6 +1022,7 @@ def main():
     subparsers.add_parser('clean', help='Remove build directory')
     subparsers.add_parser('build', help='Build templates database')
     subparsers.add_parser('validate', help='Validate configuration and paths')
+    subparsers.add_parser('perf', help='Display performance statistics')
     
     parse_parser = subparsers.add_parser('parse', help='Parse savegame')
     parse_parser.add_argument('--date', required=True, help='Date (YYYY-M-D)')
@@ -917,6 +1046,7 @@ def main():
         'clean': cmd_clean,
         'build': cmd_build,
         'validate': cmd_validate,
+        'perf': cmd_perf,
         'parse': cmd_parse,
         'inject': cmd_inject,
         'run': cmd_run

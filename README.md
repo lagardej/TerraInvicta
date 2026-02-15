@@ -83,6 +83,9 @@ python terractl.py build
 # Validate configuration and paths before building
 python terractl.py validate
 
+# Display performance statistics
+python terractl.py perf
+
 # Parse savegame to database
 python terractl.py parse --date YYYY-M-D
 
