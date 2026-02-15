@@ -1,32 +1,36 @@
-Add performance monitoring system
+Add quality tier system for model selection
 
 Features:
-- ADD @timed_command decorator for automatic timing
-- ADD logs/performance.log CSV tracking (timestamp, command, elapsed, status)
-- ADD cmd_perf() - performance statistics report
-  - Min/Avg/Max/P95 timing per command
-  - Failure count tracking
-  - Threshold violation warnings (>1.0s)
-  - Performance targets displayed
+- ADD 5 quality tiers with comedic escalation:
+  - base: Mistral 7B Q4 (~4GB, 45 tok/s) - Daily use
+  - max: Mistral 7B Q6 (~5.5GB, 40 tok/s) - "This is the max!" ← joke
+  - nuclear: Qwen2.5 14B Q4 (~8GB, 25-30 tok/s) - Superior reasoning
+  - ridiculous: Qwen2.5 32B Q4 (~18GB, 12-15 tok/s) - Near GPT-4
+  - ludicrous: Qwen2.5 72B Q2 (~28GB, 5-8 tok/s) - Maximum quality
 
-Targets:
-- build: <1.0s (template + DB creation)
-- parse: <0.5s (savegame decompression)
-- inject: <0.02s (context generation)
-- validate: <0.5s (path checking)
+- ADD --quality flag to run command
+  python terractl.py run --date 2027-7-14 --quality nuclear
+
+- UPDATE .env templates with quality-specific model paths
+  KOBOLDCPP_MODEL_BASE, KOBOLDCPP_MODEL_MAX, etc.
+  KOBOLDCPP_QUALITY=base (default)
+
+- UPDATE install command to only prompt for base model
+  Other tiers are optional (commented placeholders)
 
 Implementation:
-- All commands decorated except run (external process)
-- CSV format for easy parsing/analysis
-- Automatic tracking (no user action required)
-- Human-readable report with terractl.py perf
+- cmd_run() resolves quality tier to model path
+- Fallback to KOBOLDCPP_QUALITY from .env if --quality not specified
+- Console output shows selected quality + model filename
+- Clear error if quality tier not configured
 
 Changes:
-- terractl.py: +120 lines (decorator + log function + perf command)
-- 8 commands total (added perf)
-- Performance data persists across runs
-- README.md: document perf command
+- terractl.py: quality resolution logic in cmd_run
+- .env.linux.dist, .env.win.dist: 5 model paths per tier
+- README.md: quality tier examples
+- install generates .env with base + commented optionals
 
-Usage:
-  python terractl.py build    # Automatically timed and logged
-  python terractl.py perf     # View statistics
+Comedy: Users discover nuclear/ridiculous/ludicrous exist after "max"
+
+Credits:
+- "ludicrous" quality tier: Spaceballs reference (suggested by Claude)

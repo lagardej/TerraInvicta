@@ -200,7 +200,8 @@ def cmd_install(args):
     kobold_dir = prompt_path("  KoboldCpp directory")
     
     print("\n[4/5] Model configuration...")
-    model_path = prompt_path("  Model file path (e.g., mistral-7b-q4.gguf)")
+    print("  Note: Configure base model only (others optional)")
+    model_path_base = prompt_path("  Base model path (mistral-7b-q4.gguf)")
     
     # GPU backend
     print("\n[5/5] GPU backend selection...")
@@ -244,7 +245,12 @@ def cmd_install(args):
         f.write("# KoboldCpp\n")
         f.write("KOBOLDCPP_URL=http://localhost:5001\n")
         f.write(f"KOBOLDCPP_DIR={kobold_dir}\n")
-        f.write(f"KOBOLDCPP_MODEL={model_path}\n")
+        f.write(f"KOBOLDCPP_MODEL_BASE={model_path_base}\n")
+        f.write(f"KOBOLDCPP_MODEL_MAX=# Optional: Path to mistral-7b-q6.gguf\n")
+        f.write(f"KOBOLDCPP_MODEL_NUCLEAR=# Optional: Path to qwen2.5-14b-q4.gguf\n")
+        f.write(f"KOBOLDCPP_MODEL_RIDICULOUS=# Optional: Path to qwen2.5-32b-q4.gguf\n")
+        f.write(f"KOBOLDCPP_MODEL_LUDICROUS=# Optional: Path to qwen2.5-72b-q2.gguf\n")
+        f.write("KOBOLDCPP_QUALITY=base\n")
         f.write("KOBOLDCPP_PORT=5001\n")
         f.write(f"KOBOLDCPP_GPU_BACKEND={gpu_backend}\n")
         f.write("KOBOLDCPP_GPU_LAYERS=35\n")
@@ -891,7 +897,18 @@ def cmd_run(args):
     
     env = load_env()
     kobold_dir = env.get('KOBOLDCPP_DIR')
-    model_path = env.get('KOBOLDCPP_MODEL')
+    
+    # Determine model based on quality tier
+    quality = args.quality if hasattr(args, 'quality') and args.quality else env.get('KOBOLDCPP_QUALITY', 'base')
+    quality_upper = quality.upper()
+    model_key = f'KOBOLDCPP_MODEL_{quality_upper}'
+    model_path = env.get(model_key)
+    
+    if not model_path:
+        logging.error(f"No model configured for quality '{quality}'")
+        logging.error(f"Add {model_key} to .env")
+        return 1
+    
     port = env.get('KOBOLDCPP_PORT', '5001')
     gpu_backend = env.get('KOBOLDCPP_GPU_BACKEND', 'clblast')
     gpu_layers = env.get('KOBOLDCPP_GPU_LAYERS', '35')
@@ -899,7 +916,7 @@ def cmd_run(args):
     threads = env.get('KOBOLDCPP_THREADS', '8')
     
     if not kobold_dir or not model_path:
-        logging.error("KOBOLDCPP_DIR or KOBOLDCPP_MODEL not set in .env")
+        logging.error("KOBOLDCPP_DIR or model path not set in .env")
         return 1
     
     # Expand ~ paths for Linux
@@ -932,8 +949,12 @@ def cmd_run(args):
         cmd.extend(["--gpulayers", gpu_layers])
     
     logging.info(f"Starting KoboldCpp on port {port}")
+    logging.info(f"Quality: {quality} ({Path(model_path).name})")
     logging.info(f"GPU: {gpu_backend}, Layers: {gpu_layers}, Context: {context_size}")
-    print(f"\nLaunching KoboldCpp (GPU: {gpu_backend}, {gpu_layers} layers)...")
+    print(f"\nLaunching KoboldCpp (Quality: {quality})")
+    print(f"  Model: {Path(model_path).name}")
+    print(f"  GPU: {gpu_backend}, {gpu_layers} layers")
+    print(f"  Port: {port}\n")
     
     subprocess.run(cmd, cwd=kobold_dir)
 
@@ -1032,6 +1053,8 @@ def main():
     
     run_parser = subparsers.add_parser('run', help='Launch KoboldCpp')
     run_parser.add_argument('--date', required=True, help='Date (YYYY-M-D)')
+    run_parser.add_argument('--quality', choices=['base', 'max', 'nuclear', 'ridiculous', 'ludicrous'],
+                           help='Model quality tier (default: base or KOBOLDCPP_QUALITY from .env)')
     
     args = parser.parse_args()
     

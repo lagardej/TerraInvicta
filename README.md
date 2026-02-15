@@ -93,7 +93,10 @@ python terractl.py parse --date YYYY-M-D
 python terractl.py inject --date YYYY-M-D
 
 # Launch KoboldCpp with auto-configured GPU settings
-python terractl.py run --date 2027-7-14
+python terractl.py run --date 2027-7-14                    # base quality (default)
+python terractl.py run --date 2027-7-14 --quality max      # better quality
+python terractl.py run --date 2027-7-14 --quality nuclear  # superior reasoning
+# Also available: ridiculous, ludicrous
 
 # Increase verbosity
 python terractl.py -v build      # INFO level
