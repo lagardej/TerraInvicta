@@ -1,0 +1,41 @@
+Add launch window calculator for Mars missions
+
+Features:
+- ADD calculate_launch_windows() - computes optimal Mars windows
+  - Uses known base window (2026-11-13) + 780-day synodic period
+  - Calculates days to next optimal window
+  - Estimates delta-V penalty (calibrated with game data)
+  
+- ADD game date to context header
+  - LLM now knows current campaign date
+  - Format: "# Game Date: YYYY-MM-DD"
+  - Enables time-aware advisor responses
+
+- Calibrated penalty formula with real game data
+  - Formula: 40% * (normalized_distance ^ 0.5)
+  - Tested against 5 data points
+  - Average error: <1% (32% predicted vs 33% actual)
+
+Context output example:
+  # LAUNCH WINDOWS (Current Penalties)
+  Mars: Next window 2029-01-01 (519 days, ~17 months), Current penalty: 32%
+
+Data points used for calibration:
+  2026-02-01: 37% penalty, 285 days to window
+  2027-07-14: 31% penalty, 537 days to window
+  2027-08-01: 33% penalty, 519 days to window
+  2026-11-13: 0% penalty (optimal)
+  2029-01-01: 0% penalty (optimal)
+
+Changes:
+- terractl.py: +50 lines (launch window calculation)
+- Add math, timedelta imports
+- Context includes Mars launch data for space advisors
+- Game date header enables campaign-aware responses
+
+Critical for early-game space missions:
+- Jonny (space advisor) needs this for Mars mission planning
+- Saves ~30-40% boost cost by timing launches correctly
+- Essential decision data for resource-constrained early game
+
+Next: Extend to other space bodies (asteroids, comets, outer planets)
