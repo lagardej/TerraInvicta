@@ -1,4 +1,4 @@
-# Workflow
+# Workflow Guide
 
 ## Game Integration Flow
 
@@ -6,9 +6,9 @@
 
 **1. PREPARATION PHASE** (Outside game)
    - Pause game at Assignment Phase
-   - Sync game state: `python terractl.py parse --date YYYY-M-D`
-   - Generate context: `python terractl.py inject --date YYYY-M-D`
-   - Launch LLM: `python terractl.py run --date YYYY-M-D`
+   - Sync game state: `tias parse --date YYYY-M-D`
+   - Generate context: `tias inject --date YYYY-M-D`
+   - Launch LLM: `tias run --date YYYY-M-D`
    - Consult advisors via KoboldCpp chat
    - Advisors analyze state, recommend strategy
    - User decides final strategy
@@ -28,6 +28,51 @@
    - Re-sync game state (new savegame)
    - Repeat cycle
 
+## Command Chaining
+
+### Basic Pipeline
+
+```bash
+# Full pipeline (parse + inject + run)
+tias parse --date 2027-7-14 && \
+tias inject --date 2027-7-14 && \
+tias run --date 2027-7-14
+```
+
+### Conditional Execution
+
+```bash
+# Only continue if previous command succeeds
+tias clean && tias build && echo "Build successful"
+
+# Run even if previous fails (PowerShell)
+tias clean; tias build
+
+# Stop on first error (Bash)
+set -e
+tias clean
+tias build
+tias parse --date 2027-7-14
+```
+
+### Common Chains
+
+```bash
+# Clean rebuild
+tias clean && tias build
+
+# Quick context update (skip parse)
+tias inject --date 2027-7-14 && tias run --date 2027-7-14
+
+# Validation + build
+tias validate && tias build
+
+# Full pipeline with quality tier
+tias parse --date 2027-7-14 && \
+tias inject --date 2027-7-14 && \
+tias run --date 2027-7-14 --quality nuclear
+```
+
 ## Data Sync Workflow
 
 ### Quick Sync (After Each Turn)
@@ -36,41 +81,35 @@
 # 1. Save game with descriptive date
 # Example: Resistsave00005_2027-8-14.gz
 
-# 2. Parse new savegame
-python terractl.py parse --date 2027-8-14
-
-# 3. Update context
-python terractl.py inject --date 2027-8-14
-
-# 4. Context ready in generated/mistral_context.txt
-# Load manually into KoboldCpp or use `run` command
+# 2. Parse + inject + run in one go
+tias parse --date 2027-8-14 && \
+tias inject --date 2027-8-14 && \
+tias run --date 2027-8-14
 ```
 
 ### Full Rebuild (After Game Updates)
 
 ```bash
-# 1. Clean all artifacts
-python terractl.py clean
-
-# 2. Rebuild templates from game files
-python terractl.py build
-
-# 3. Parse current savegame
-python terractl.py parse --date YYYY-M-D
-
-# 4. Generate fresh context
-python terractl.py inject --date YYYY-M-D
+# Clean + rebuild + parse + inject
+tias clean && \
+tias build && \
+tias parse --date YYYY-M-D && \
+tias inject --date YYYY-M-D
 ```
 
 ## Typical Session
 
-### Initial Setup
+### Initial Setup (One Time)
 
 ```bash
-# One-time setup
-cp .env.dist .env
-# Edit .env with paths
-python terractl.py build
+# Install package
+pip install -e .
+
+# Interactive configuration
+tias install
+
+# Build game templates
+tias build
 ```
 
 ### Per-Turn Workflow
@@ -79,44 +118,68 @@ python terractl.py build
 # 1. Play game, reach Assignment Phase, save
 # Filename: Resistsave00042_2028-3-7.gz
 
-# 2. Sync state
-python terractl.py parse --date 2028-3-7
+# 2. Full pipeline
+tias parse --date 2028-3-7 && \
+tias inject --date 2028-3-7 && \
+tias run --date 2028-3-7
 
-# 3. Generate context  
-python terractl.py inject --date 2028-3-7
-
-# 4. Launch LLM
-python terractl.py run --date 2028-3-7
-# OR manually: KoboldCpp UI → load generated/mistral_context.txt
-
-# 5. Chat with advisors
+# 3. Chat with advisors in KoboldCpp
 # Example prompts:
 # - "Chuck, recommend covert ops priorities this turn"
 # - "CODEX, evaluate our strategic position"
 # - "Valentina, which faction is most vulnerable to infiltration?"
 
-# 6. Execute strategy in-game
+# 4. Execute strategy in-game
 
-# 7. Advance to next turn, repeat
+# 5. Advance to next turn, repeat
 ```
 
-## Context Inspection
+## Date Format Flexibility
 
-Context file location: `generated/mistral_context.txt`
+All date-based commands support multiple formats:
+
+```bash
+# ISO format with/without leading zeros
+tias parse --date 2027-7-14
+tias parse --date 2027-07-14
+
+# European format
+tias parse --date 14/7/2027
+tias parse --date 14/07/2027
+
+# All equivalent
+```
+
+## Context Management
+
+### Inspecting Context
+
+```bash
+# View generated context
+cat generated/mistral_context.txt
+
+# Count lines
+wc -l generated/mistral_context.txt
+
+# View first 20 lines
+head -n 20 generated/mistral_context.txt
+```
 
 **What's included:**
 - Advisor list with domains
 - Key hab sites (Luna, Mars) with resource ranges
+- Launch windows (Mars, NEAs)
 - (Extensible: add factions, councilors, control points)
 
-**Inspect before loading:**
-```bash
-cat generated/mistral_context.txt
-# or
-notepad generated/mistral_context.txt
-```
+### Regenerating Context
 
-Verify context contains expected game state before consulting advisors.
+```bash
+# Quick regeneration (same savegame)
+tias inject --date 2027-7-14
+
+# After new savegame
+tias parse --date 2027-7-15 && tias inject --date 2027-7-15
+```
 
 ## Multiple Campaigns
 
@@ -124,31 +187,42 @@ Verify context contains expected game state before consulting advisors.
 
 ```bash
 # Campaign A (Resistance, 2027)
-python terractl.py parse --date 2027-7-14
-python terractl.py inject --date 2027-7-14
+tias parse --date 2027-7-14 && tias inject --date 2027-7-14
 
 # Campaign B (Academy, 2028)  
-python terractl.py parse --date 2028-2-3
-python terractl.py inject --date 2028-2-3
+tias parse --date 2028-2-3 && tias inject --date 2028-2-3
 
 # Databases persist:
 # build/savegame_2027_7_14.db
 # build/savegame_2028_2_3.db
-
-# Context regenerates on each inject
 ```
 
 ### Switching Campaigns
 
-Context file always reflects last `inject` command. To switch:
+Context file reflects last `inject` command:
 
 ```bash
-python terractl.py inject --date 2027-7-14  # Campaign A
-python terractl.py run --date 2027-7-14
+# Switch to Campaign A
+tias inject --date 2027-7-14 && tias run --date 2027-7-14
 
-# Later...
-python terractl.py inject --date 2028-2-3   # Campaign B
-python terractl.py run --date 2028-2-3
+# Switch to Campaign B
+tias inject --date 2028-2-3 && tias run --date 2028-2-3
+```
+
+## Quality Tier Selection
+
+```bash
+# Fast iteration (Mistral 7B Q4)
+tias run --date 2027-7-14 --quality base
+
+# Better quality (Qwen 14B Q4)
+tias run --date 2027-7-14 --quality nuclear
+
+# Maximum quality (Qwen 72B Q2)
+tias run --date 2027-7-14 --quality ludicrous
+
+# Use default from .env if omitted
+tias run --date 2027-7-14
 ```
 
 ## Debugging Workflow
@@ -156,8 +230,11 @@ python terractl.py run --date 2028-2-3
 ### Verbose Logging
 
 ```bash
-python terractl.py -v parse --date YYYY-M-D    # INFO level
-python terractl.py -vv build                   # DEBUG level
+# INFO level logging
+tias -v parse --date 2027-7-14
+
+# DEBUG level logging
+tias -vv build
 ```
 
 Logs: `logs/terractl.log` (append mode, persists across runs)
@@ -177,8 +254,11 @@ ls -lh build/savegame_*.db
 wc -l generated/mistral_context.txt
 # Should be 50-100 lines (expandable)
 
-# 4. Verify context content
-head -n 20 generated/mistral_context.txt
+# 4. Validate configuration
+tias validate
+
+# 5. Check performance
+tias perf
 ```
 
 ### Common Issues
@@ -187,37 +267,112 @@ head -n 20 generated/mistral_context.txt
 ```
 FileNotFoundError: No savegame found matching *_YYYY-M-D.gz
 ```
-Fix: Check date format matches actual filename
+Fix: Verify date format matches actual savegame filename
 
 **Outdated context:**
 Symptom: Advisors reference old game state
 Fix: Re-run `inject` after parsing new savegame
 
-**Templates not building:**
-Normal: 7/58 templates have invalid JSON in game files
-Impact: None (advisory system uses 52 valid templates)
+**Import errors after update:**
+```bash
+pip uninstall tias
+pip install -e .
+```
+
+## Performance Optimization
+
+### Monitor Performance
+
+```bash
+# View performance stats
+tias perf
+
+# Performance log location
+cat logs/performance.log
+```
+
+### Quick Operations
+
+```bash
+# Skip parse if savegame unchanged
+tias inject --date 2027-7-14 && tias run --date 2027-7-14
+
+# Clean + build in one chain
+tias clean && tias build
+```
+
+## Scripting and Automation
+
+### Bash Script Example
+
+```bash
+#!/bin/bash
+# update-context.sh
+
+DATE="$1"
+if [ -z "$DATE" ]; then
+    echo "Usage: $0 YYYY-M-D"
+    exit 1
+fi
+
+echo "Updating context for $DATE..."
+tias parse --date "$DATE" && \
+tias inject --date "$DATE" && \
+echo "Context ready! Launching KoboldCpp..." && \
+tias run --date "$DATE"
+```
+
+### PowerShell Script Example
+
+```powershell
+# update-context.ps1
+param($Date)
+
+if (-not $Date) {
+    Write-Error "Usage: .\update-context.ps1 YYYY-M-D"
+    exit 1
+}
+
+Write-Host "Updating context for $Date..."
+tias parse --date $Date
+if ($LASTEXITCODE -eq 0) {
+    tias inject --date $Date
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Context ready! Launching KoboldCpp..."
+        tias run --date $Date
+    }
+}
+```
 
 ## Advanced: Custom Context
 
-Edit `cmd_inject()` in `terractl.py` to add:
+To extend context with additional game data:
+
+1. Edit `src/inject/command.py`
+2. Add SQL queries to extract data from savegame DB
+3. Append to context file
+4. Rebuild: `pip install -e .`
+5. Generate: `tias inject --date YYYY-M-D`
+
+Example additions:
 - Faction standings
 - Councilor roster  
 - Control point distribution
 - Tech tree progress
 - Resource stockpiles
 
-Example addition:
-```python
-# In cmd_inject(), after hab sites:
-cursor.execute('SELECT data FROM gamestates WHERE key = ?',
-    ('PavonisInteractive.TerraInvicta.TIFactionState',))
-factions = json.loads(cursor.fetchone()[0])
+See [DEVELOPER_GUIDE.md](../DEVELOPER_GUIDE.md) for implementation details.
 
-f.write("# FACTIONS\n")
-for faction in factions:
-    name = faction.get('displayName_key')
-    cp = faction.get('controlPoints', 0)
-    f.write(f"{name}: {cp} CP\n")
-```
+## Best Practices
 
-Re-inject to regenerate context with new data.
+1. **Always chain commands** - Use `&&` to stop on errors
+2. **Save frequently** - Create savegames at every Assignment Phase
+3. **Consistent naming** - Use date format in savegame names
+4. **Check logs** - Review `logs/terractl.log` after errors
+5. **Monitor performance** - Run `tias perf` periodically
+6. **Validate config** - Run `tias validate` after changes
+7. **Clean builds** - Use `tias clean && tias build` after game updates
+
+---
+
+For complete command reference, see [DEVELOPER_GUIDE.md](../DEVELOPER_GUIDE.md)

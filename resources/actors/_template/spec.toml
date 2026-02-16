@@ -1,5 +1,5 @@
 # Actor Specification Template
-# Copy this directory to src/actors/<actor_name>/ and fill in values
+# Copy this directory to resources/actors/<actor_name>/ and fill in values
 
 # Identity
 name = "template"

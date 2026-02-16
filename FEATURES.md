@@ -366,6 +366,61 @@ Meta-layer that validates advisor responses for quality.
 
 ---
 
+## Auto-Correction of Malformed Game Templates
+
+**Status:** Idea  
+**Priority:** Low  
+**Complexity:** Low
+
+**Context:**  
+Terra Invicta ships ~7 malformed JSON template files. They are currently skipped during `tias build` and excluded from `game_templates.db`. Since we have no control over the source files, correction must happen in-memory at build time.
+
+**Goal:**  
+Parse and recover malformed game templates automatically, without modifying source files.
+
+**Known Issues in Terra Invicta JSON:**
+- Trailing commas in arrays/objects
+- C-style `//` comments
+- Possibly unquoted keys
+
+**Approach:**  
+Use a lenient JSON parser as fallback when `json.load()` fails.
+
+```python
+# Option 1: jsonc-parser (handles comments + trailing commas)
+pip install jsonc-parser
+
+# Option 2: json5 (superset of JSON)
+pip install json5
+
+# Option 3: regex pre-processing (no dependency)
+import re
+
+def repair_json(text: str) -> str:
+    # Remove // comments
+    text = re.sub(r'//[^\n]*', '', text)
+    # Remove trailing commas before ] or }
+    text = re.sub(r',\s*([\]\}])', r'\1', text)
+    return text
+```
+
+**Implementation in `build_templates()`:**
+```python
+try:
+    template_data = json.load(f)
+except json.JSONDecodeError:
+    f.seek(0)
+    template_data = json.loads(repair_json(f.read()))  # Fallback
+```
+
+**Notes:**
+- Option 3 (regex) preferred - no new dependency
+- Only triggered as fallback, no impact on valid files
+- Should recover all 7 known malformed templates
+- Adds recovered count to build summary output
+
+---
+
 ## Advanced Features (Lower Priority)
 
 ### Real-Time Savegame Monitoring

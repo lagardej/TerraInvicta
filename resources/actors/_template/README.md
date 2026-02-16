@@ -4,7 +4,7 @@ This template provides the structure for creating new advisors.
 
 ## Usage
 
-1. Copy this entire `_template/` directory to `src/actors/<actor_name>/`
+1. Copy this entire `_template/` directory to `resources/actors/<actor_name>/`
 2. Fill in all fields in `spec.toml`
 3. Write background story in `background.txt`
 4. Add 20-30 opener variations to `openers.csv`

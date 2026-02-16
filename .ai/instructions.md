@@ -43,7 +43,7 @@
 - FEATURES.md captures future work, not current docs
 
 ### File Organization
-- Source (human-editable): src/
+- Resources (human-editable): resources/
 - Build artifacts: build/ (gitignored)
 - Runtime data: generated/ (gitignored)
 - Game templates: read from install, never copy

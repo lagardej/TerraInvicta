@@ -4,11 +4,9 @@ Terra Invicta Advisory System - Core Utilities
 Shared utilities for environment loading, logging, and path management.
 """
 
-import os
-import sys
 import logging
+import sys
 from pathlib import Path
-from datetime import datetime
 
 
 def setup_logging(verbosity: int):
@@ -19,11 +17,12 @@ def setup_logging(verbosity: int):
         2: logging.DEBUG
     }
     level = levels.get(verbosity, logging.DEBUG)
-    
-    log_dir = Path(__file__).parent.parent / "logs"
+
+    project_root = get_project_root()
+    log_dir = project_root / "logs"
     log_dir.mkdir(exist_ok=True)
     log_file = log_dir / "terractl.log"
-    
+
     logging.basicConfig(
         level=level,
         format='%(asctime)s - %(levelname)s - %(message)s',
@@ -36,23 +35,25 @@ def setup_logging(verbosity: int):
 
 def load_env():
     """Load .env file"""
-    env_path = Path(__file__).parent.parent / ".env"
+    project_root = get_project_root()
+    env_path = project_root / ".env"
     env = {}
-    
+
     if not env_path.exists():
-        logging.error(".env not found. Run: tias.py install")
+        logging.error(".env not found. Run: tias install")
         sys.exit(1)
-    
+
     with open(env_path) as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith('#') and '=' in line:
                 key, value = line.split('=', 1)
                 env[key.strip()] = value.strip()
-    
+
     return env
 
 
 def get_project_root() -> Path:
-    """Get project root directory"""
-    return Path(__file__).parent.parent
+    """Get project root directory (one level up from src/)"""
+    # From src/core/core.py -> src/core/ -> src/ -> project_root/
+    return Path(__file__).parent.parent.parent

@@ -1,6 +1,28 @@
 # Terra Invicta Advisory System
 
+## About This Project
+
+This project is used as a **learning experience for AI-assisted development**.
+
+The workflow is collaborative by design:
+- **I take the decisions** - architecture, features, priorities, direction
+- **Claude (Anthropic) suggests, corrects, codes, and documents** - implementation, refactoring, best practices
+
+This means the codebase reflects real decisions made through conversation: some things were built wrong and fixed, some were over-engineered and simplified, some were discovered by doing. The git history and `.ai/` directory preserve that process.
+
+If you're reading this as a fellow learner: the mistakes are intentional in the sense that they were real, and the corrections are where the learning happened.
+
+---
+
 LLM-powered advisory system for Terra Invicta campaign gameplay. Provides domain-specific guidance through 6 specialized councilor advisors plus CODEX state evaluator.
+
+## Documentation
+
+- **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete reference for commands, workflows, and development
+- **[Features](FEATURES.md)** - Feature list and roadmap
+- **[Technical Details](docs/technical.md)** - Architecture and implementation
+- **[Workflow Guide](docs/workflow.md)** - User workflows
+- **[Performance](docs/performance.md)** - Performance targets and monitoring
 
 ## Overview
 
@@ -26,344 +48,242 @@ LLM-powered advisory system for Terra Invicta campaign gameplay. Provides domain
 - KoboldCpp + Mistral 7B Q4 model (local LLM)
 - AMD GPU: ROCm drivers (Linux) or Vulkan support (Windows/Linux)
 
-### Setup
+### Installation
 
-1. **Clone repository:**
 ```bash
+# Clone repository
 git clone <repo-url>
 cd TerraInvicta
+
+# Install in editable mode
+pip install -e .
+
+# Verify installation
+tias --help
 ```
 
-2. **Configure environment:**
+### Initial Setup
+
 ```bash
-# Interactive setup (recommended)
-python terractl.py install
-
-# Manual setup (alternative)
-# Linux: cp .env.linux.dist .env
-# Windows: cp .env.win.dist .env
-# Then edit .env with your paths
+# Interactive configuration wizard
+tias install
 ```
 
-3. **Build game data:**
+This will:
+- Auto-detect Terra Invicta installation
+- Auto-detect savegame directory
+- Configure KoboldCpp path
+- Configure model path
+- Set GPU backend (vulkan/clblast)
+- Create `.env` file
+
+### Build Game Templates
+
 ```bash
-python terractl.py build
+tias build
 ```
 
-4. **Parse savegame:**
+This extracts and indexes game data from Terra Invicta installation.
+
+### Basic Usage
+
 ```bash
-python terractl.py parse --date 2027-7-14
+# Parse a savegame
+tias parse --date 2027-7-14
+
+# Generate LLM context
+tias inject --date 2027-7-14
+
+# Launch KoboldCpp with context
+tias run --date 2027-7-14
+
+# Or chain them together
+tias parse --date 2027-7-14 && \
+tias inject --date 2027-7-14 && \
+tias run --date 2027-7-14
 ```
 
-5. **Generate LLM context:**
-```bash
-python terractl.py inject --date 2027-7-14
-```
-
-6. **Launch KoboldCpp:**
-```bash
-python terractl.py run --date 2027-7-14
-# Manually load data/mistral_context.txt into KoboldCpp UI
-```
+**Date formats supported:**
+- `YYYY-M-D` (e.g., `2027-7-14`)
+- `YYYY-MM-DD` (e.g., `2027-07-14`)
+- `DD/MM/YYYY` (e.g., `14/07/2027`)
 
 ## Commands
 
-### `terractl.py` - Unified control script
+| Command | Description |
+|---------|-------------|
+| `tias install` | Interactive setup wizard |
+| `tias clean` | Remove build directory |
+| `tias build` | Build game templates database |
+| `tias validate` | Validate configuration |
+| `tias parse --date DATE` | Parse savegame to database |
+| `tias inject --date DATE` | Generate LLM context |
+| `tias run --date DATE` | Launch KoboldCpp |
+| `tias perf` | Show performance statistics |
 
+See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for complete command reference.
+
+## Common Workflows
+
+### Full Clean Build
 ```bash
-# Interactive setup with auto-detection
-python terractl.py install
-
-# Clean build artifacts (removes entire build/ directory)
-python terractl.py clean
-
-# Build templates database from game files
-python terractl.py build
-
-# Validate configuration and paths before building
-python terractl.py validate
-
-# Display performance statistics
-python terractl.py perf
-
-# Parse savegame to database
-python terractl.py parse --date YYYY-M-D
-
-# Generate optimized LLM context
-python terractl.py inject --date YYYY-M-D
-
-# Launch KoboldCpp with auto-configured GPU settings
-python terractl.py run --date 2027-7-14                    # base quality (default)
-python terractl.py run --date 2027-7-14 --quality max      # better quality
-python terractl.py run --date 2027-7-14 --quality nuclear  # superior reasoning
-# Also available: ridiculous, ludicrous
-
-# Increase verbosity
-python terractl.py -v build      # INFO level
-python terractl.py -vv build     # DEBUG level
+tias clean && tias build
 ```
 
-## Architecture
-
-### Data Pipeline
-
-```
-Game Templates (read-only)          Savegame .gz (compressed JSON)
-        ↓                                    ↓
-   Build Process                       Parse Process
-        ↓                                    ↓
-game_templates.db (SQLite)          savegame_YYYY_M_D.db (SQLite)
-        ↓                                    ↓
-        └────────────────┬───────────────────┘
-                         ↓
-                  Inject Process
-                         ↓
-           generated/mistral_context.txt
-                         ↓
-              KoboldCpp system prompt
+### Complete Pipeline
+```bash
+tias parse --date 2027-7-14 && \
+tias inject --date 2027-7-14 && \
+tias run --date 2027-7-14
 ```
 
-### File Structure
+### Quick Context Update
+```bash
+# Skip parse if savegame unchanged
+tias inject --date 2027-7-14 && tias run --date 2027-7-14
+```
+
+### Different Quality Tiers
+```bash
+tias run --date 2027-7-14 --quality base      # Fast (Mistral 7B Q4)
+tias run --date 2027-7-14 --quality nuclear   # Better (Qwen 14B Q4)
+tias run --date 2027-7-14 --quality ludicrous # Best (Qwen 72B Q2)
+```
+
+## Development
+
+### Project Structure
 
 ```
 TerraInvicta/
-├── terractl.py          # Single unified control script (800 lines)
-├── .env                 # Local configuration (gitignored)
-├── .env.linux.dist      # Linux configuration template
-├── .env.win.dist        # Windows configuration template
-├── README.md            # This file
-├── src/
-│   └── actors/          # Actor definitions
-│       ├── chuck/
-│       │   ├── spec.toml        # Identity, domain, tiers
-│       │   ├── background.txt   # Prose description
-│       │   ├── openers.csv      # CODEX greeting variations
-│       │   └── reactions.csv    # Spectator reactions
-│       └── ... (7 actors total)
-├── build/               # Generated artifacts (gitignored, recreated by build)
-│   ├── game_templates.db        # Static game data (52 templates)
-│   ├── savegame_YYYY_M_D.db     # Campaign state snapshots
-│   ├── actors/*.json            # Compiled actor specs
-│   └── templates/*.json         # Templates with merged localization
-├── generated/           # Runtime generated files (gitignored)
-│   └── mistral_context.txt      # LLM system prompt (inspectable)
-└── logs/
-    └── terractl.log             # Build/parse/inject logs
+├── src/                    # Source code (Python package)
+│   ├── __main__.py        # Entry point (tias command)
+│   ├── core/              # Core utilities
+│   ├── build/             # Build command
+│   ├── clean/             # Clean command
+│   ├── parse/             # Parse command
+│   ├── inject/            # Inject command
+│   ├── run/               # Run command
+│   ├── validate/          # Validate command
+│   └── perf/              # Performance tracking
+├── resources/             # Game data
+│   ├── actors/           # AI advisor definitions
+│   └── prompts/          # LLM prompts
+├── tests/                # Test suite
+├── docs/                 # Documentation
+└── build/                # Build output (gitignored)
 ```
-
-### Data Sources
-
-1. **Game Templates** (static reference data)
-   - Source: `GAME_INSTALL_DIR/TerraInvicta_Data/StreamingAssets/`
-   - Format: 58 JSON templates + 71 `.en` localization files
-   - Output: `build/game_templates.db` (SQLite, ~5MB)
-   - Contains: Celestial bodies, hab sites, mining profiles, traits, tech tree
-
-2. **Savegames** (dynamic campaign state)
-   - Source: `GAME_SAVES_DIR/*_YYYY-M-D.gz`
-   - Format: ~13MB compressed JSON (~150MB uncompressed)
-   - Output: `build/savegame_YYYY_M_D.db` (SQLite, ~13MB)
-   - Contains: All game state (62 gamestate keys as JSON blobs)
-
-3. **Actor Specs** (simulation configuration)
-   - Source: `src/actors/*/`
-   - Format: TOML (spec) + CSV (dialogue) + TXT (background)
-   - Output: `build/actors/*.json` (7 files)
-   - Defines: Advisor personalities, domains, tier-specific scopes
-
-## Database Schema
-
-### game_templates.db
-
-**Tables:**
-- `space_bodies` - Celestial objects (68 bodies: planets, moons, asteroids)
-- `hab_sites` - Habitable locations (629 sites with resource profiles)
-- `mining_profiles` - Resource generation ranges (mean, width, min for each resource)
-- `traits` - Councilor traits (166 traits with localized descriptions)
-
-**Example Queries:**
-```sql
--- Lunar sites with water resources
-SELECT h.displayName, p.water_mean, p.water_min, p.water_width
-FROM hab_sites h
-JOIN mining_profiles p ON h.miningProfile = p.dataName
-WHERE h.body = 'Luna' AND p.water_mean > 0;
-
--- Mars sites ranked by metals
-SELECT displayName, metals 
-FROM hab_sites 
-WHERE body = 'Mars' 
-ORDER BY metals DESC;
-```
-
-### savegame_YYYY_M_D.db
-
-**Tables:**
-- `campaign` - Metadata (key-value pairs)
-- `gamestates` - All game state (key = class name, data = JSON blob)
-
-**Available gamestate keys:**
-- `PavonisInteractive.TerraInvicta.TICouncilorState` (154 councilors)
-- `PavonisInteractive.TerraInvicta.TIFactionState` (8 factions)
-- `PavonisInteractive.TerraInvicta.TIControlPoint` (524 control points)
-- 59 other gamestate types
-
-**Example Query:**
-```sql
--- Extract all councilors
-SELECT json_extract(data, '$') as councilors
-FROM gamestates 
-WHERE key = 'PavonisInteractive.TerraInvicta.TICouncilorState';
-```
-
-## Hardware Optimization
-
-**Reference specs:** AMD Ryzen 7 9800X3D (8-core, 4.7GHz) + AMD RX 9070 XT + 32GB RAM
-
-**GPU Backend Selection:**
-- **Linux + AMD:** `KOBOLDCPP_GPU_BACKEND=clblast` (ROCm, best performance)
-- **Windows + AMD:** `KOBOLDCPP_GPU_BACKEND=vulkan` (cross-platform)
-- **NVIDIA:** `KOBOLDCPP_GPU_BACKEND=cublas` (CUDA)
-
-**Recommended Settings (.env):**
-```bash
-KOBOLDCPP_GPU_BACKEND=clblast    # or vulkan for Windows
-KOBOLDCPP_GPU_LAYERS=35          # Offload most layers to GPU
-KOBOLDCPP_CONTEXT_SIZE=16384     # 16K context (32GB RAM)
-KOBOLDCPP_THREADS=8              # Match CPU cores
-```
-
-**Expected Performance:**
-- ROCm (clblast): ~45 tokens/s
-- Vulkan: ~35-40 tokens/s
-- CPU only: ~8-10 tokens/s
-
-## Development
 
 ### Running Tests
 
 ```bash
-# Install test dependencies
-pip install -r requirements-dev.txt
-
-# Run all tests
+# All tests
 pytest
 
-# Run with coverage
-pytest --cov=lib --cov-report=html
+# With coverage
+pytest --cov=src
 
-# Run specific test file
-pytest tests/test_launch_windows.py -v
+# Specific test file
+pytest tests/test_launch_windows.py
+
+# Verbose output
+pytest -v
 ```
 
-### Adding New Actor
+### Adding New Advisors
 
-1. Create directory: `src/actors/newactor/`
-2. Add files (use `src/actors/_template/` as guide):
-   - `spec.toml` - Identity, domain, tier scopes
-   - `background.txt` - Prose character description
-   - `openers.csv` - CODEX greeting variations (30 rows recommended)
-   - `reactions.csv` - Spectator reactions with categories
-3. Rebuild: 
+1. Create directory: `resources/actors/newname/`
+2. Add files:
+   - `spec.toml` - Metadata
+   - `background.txt` - Character background
+   - `openers.csv` - Conversation openers
+   - `reactions.csv` - Response patterns
+3. Rebuild: `tias clean && tias build`
+
+See `resources/actors/_template/` for structure.
+
+## Configuration
+
+### Environment Variables
+
+Edit `.env` file:
+
 ```bash
-python terractl.py clean
-python terractl.py build
+# KoboldCpp
+KOBOLDCPP_DIR=/path/to/koboldcpp
+KOBOLDCPP_MODEL_BASE=/path/to/mistral-7b-q4.gguf
+KOBOLDCPP_PORT=5001
+KOBOLDCPP_GPU_BACKEND=vulkan
+
+# Terra Invicta
+GAME_INSTALL_DIR=/path/to/Terra Invicta
+GAME_SAVES_DIR=/path/to/saves
+
+# System
+LOG_LEVEL=INFO
 ```
 
-### Modifying Context Generation
+### Quality Tiers
 
-Edit `cmd_inject()` function in `terractl.py` (line ~460) to customize data extraction.
+Configure in `.env`:
 
-Current extraction includes:
-- Actor list with domains
-- Hab sites for Luna/Mars with resource ranges
-- (Extend with: factions, councilors, control points, etc.)
+```bash
+KOBOLDCPP_MODEL_BASE=/path/to/mistral-7b-q4.gguf
+KOBOLDCPP_MODEL_MAX=/path/to/mistral-7b-q6.gguf
+KOBOLDCPP_MODEL_NUCLEAR=/path/to/qwen2.5-14b-q4.gguf
+KOBOLDCPP_MODEL_RIDICULOUS=/path/to/qwen2.5-32b-q4.gguf
+KOBOLDCPP_MODEL_LUDICROUS=/path/to/qwen2.5-72b-q2.gguf
+```
 
-**Why file-based context?**
-- Inspectable for debugging
-- Version controllable
-- Shareable across runs
-- Manual tweaking/testing possible
-- ~10ms overhead negligible vs debuggability
+## Features
 
-### Extending Database Schema
+### Launch Window Calculations
+- Mars transfer windows with accurate penalty calculations (<1% error)
+- Near-Earth Asteroid (Sisyphus, Hephaistos) transfer windows
+- Synodic period verification
 
-Add tables in `create_templates_db()` or `cmd_parse()` functions in `terractl.py`.
+### Performance Monitoring
+- Automatic command timing
+- Performance log: `logs/performance.log`
+- View stats: `tias perf`
 
-## Performance Metrics
-
-**Build Pipeline:**
-- Clean: <0.1s
-- Build: ~0.5s (52 templates + 7 actors + DB creation)
-- Parse: ~0.4s (decompress 13MB + insert 62 keys)
-- Inject: ~0.01s (query DBs + write context)
-- **Total: <1s for full pipeline**
-
-**File Sizes:**
-- `game_templates.db`: ~5MB
-- `savegame_*.db`: ~13MB
-- `mistral_context.txt`: ~4KB (expandable)
-- Total build artifacts: ~20MB per savegame
+### Multi-Tier System
+- Tier 1: Basic operational advice
+- Tier 2: Strategic faction-level guidance  
+- Tier 3: Civilization-scale recommendations
 
 ## Troubleshooting
 
-**Build errors for 7 templates:**
-Expected behavior. Game files contain invalid JSON (trailing commas):
-- TIGlobalConfig, TIMapGroupVisualizerTemplate, TIMetaTemplate
-- TIPlayerTemplate, TISpaceFleetTemplate, TISpaceShipTemplate
-- TITimeEventTemplate
-
-**Result:** 52/58 templates build successfully. Missing templates don't affect advisory system.
-
-**Savegame not found:**
+### Import Errors
+```bash
+pip uninstall tias
+pip install -e .
 ```
-FileNotFoundError: No savegame found matching *_YYYY-M-D.gz
-```
-**Fix:**
-1. Check `GAME_SAVES_DIR` path in `.env`
-2. Common locations:
-   - Linux: `~/.local/share/Pavonis Interactive/Terra Invicta/Saves`
-   - Windows: `C:\Users\YourName\Documents\My Games\TerraInvicta\Saves`
-3. Verify date format matches savegame filename
 
-**Windows console encoding errors:**
-System uses ASCII `[OK]` markers instead of Unicode checkmarks for full Windows compatibility.
+### Command Not Found
+Ensure Python scripts directory is in PATH:
+- Windows: `C:\Users\YourName\AppData\Local\Python\pythoncore-3.14-64\Scripts`
+- Linux: `~/.local/bin`
 
-**KoboldCpp GPU not detected:**
-- AMD users: Install ROCm drivers (Linux) or ensure Vulkan support
-- Verify GPU backend setting matches your hardware
-- Check logs for GPU initialization messages
+### Performance Issues
+Check logs: `logs/performance.log`
 
-## Known Limitations
+Run validation: `tias validate`
 
-- Read-only access to game files (no save modification)
-- Savegame must be manually synchronized (run `parse` after each game session)
-- Context injection into KoboldCpp is manual (paste `data/mistral_context.txt`)
-- Tier progression not yet automated (CODEX evaluation pending)
+## Contributing
 
-## Roadmap
-
-- [ ] Automated tier detection via CODEX evaluation
-- [ ] Real-time savegame monitoring
-- [ ] Tier-specific prompt templates
-- [ ] Domain-specific routing logic
-- [ ] Extended context extraction (factions, councilors, tech tree)
-- [ ] Web interface for context inspection
+1. Create feature branch
+2. Add tests for new functionality
+3. Update documentation
+4. Run tests: `pytest`
+5. Submit PR
 
 ## License
 
-MIT License
+[Your License Here]
 
-## Credits
+## Support
 
-Built for Terra Invicta by Pavonis Interactive
-
-**Advisory System Development:**
-- Design & Implementation: Anthropic Claude (assisted)
-- Game Data Analysis: Terra Invicta community
-- Performance Optimization: User feedback
-
-**Special Thanks:**
-- Pavonis Interactive for Terra Invicta
-- KoboldCpp project for local LLM support
-- Mistral AI for Mistral 7B model
+- **Documentation:** [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
+- **Issues:** GitHub Issues
+- **Logs:** `logs/terractl.log`
