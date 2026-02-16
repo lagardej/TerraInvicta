@@ -1,42 +1,40 @@
-Add NEA launch windows (date only, no penalty yet)
+Phase 1 refactoring: Extract utilities to lib/ + add testing
 
-Features:
-- ADD synodic periods for key NEAs
-  - 1866 Sisyphus: 592 days (1.62 years)
-  - 2212 Hephaistos: 533 days (1.46 years)
-  
-- EXTEND calculate_launch_windows() for NEAs
-  - Shows next optimal window date
-  - Shows days until window
-  - No penalty estimate (pending calibration)
+BREAKING CHANGE: New module structure (imports updated)
 
-- Mars penalty remains accurate (<1% error)
-  - Calibrated with 5 game data points
-  - Formula: 40% * (normalized_distance ^ 0.5)
+Refactoring (Domain-Driven Design):
+- CREATE lib/ package for domain modules
+- EXTRACT lib/core.py (60 lines)
+  - setup_logging, load_env, get_project_root
+- EXTRACT lib/performance.py (60 lines)
+  - timed_command decorator, log_performance
+- EXTRACT lib/launch_windows.py (90 lines)
+  - calculate_launch_windows with Mars + NEA support
+- UPDATE terractl.py to import from lib/
+  - Reduced by ~210 lines (1250 → 1040 lines)
 
-Context output example:
-  # LAUNCH WINDOWS
-  Mars: Next window 2029-01-01 (519 days, ~17 months), Current penalty: 33%
-  Sisyphus: Next window 2029-03-16 (592 days, ~19 months)
-  Hephaistos: Next window 2029-01-15 (533 days, ~17 months)
+Testing infrastructure:
+- ADD tests/ directory with pytest structure
+- ADD tests/test_launch_windows.py (11 tests)
+  - Mars penalty accuracy (verified against game data)
+  - NEA synodic periods (Sisyphus, Hephaistos)
+  - Optimal window detection (0% penalty)
+  - Edge cases (missing files, future/past dates)
+- ADD tests/test_core.py (basic structure tests)
+- ADD pyproject.toml (pytest configuration)
+- ADD requirements-dev.txt (pytest, pytest-cov)
+- UPDATE README.md with testing instructions
 
-Why NEAs matter:
-- Alternative early expansion strategy
-- Closer than Mars (lower delta-V)
-- More frequent windows (shorter synodic periods)
-- Good for resource extraction before Mars missions
+Benefits:
+- Cleaner separation of concerns
+- Each module < 100 lines (maintainable)
+- Easier to test individual components
+- Framework ready for expansion (Phase 2/3)
 
-Synodic period verification from game:
-  Hephaistos: 2027-08-01 → 2029-01-15 = 533 days ✓
-  Sisyphus: 2027-08-02 → 2029-03-16 = 592 days ✓
-  Mars: 2026-11-13 → 2029-01-01 = 780 days ✓
+No behavior changes - all functionality identical.
 
-Next steps (deferred to future):
-- Collect comprehensive penalty data for NEAs (sample every 30 days)
-- Build interpolation tables (power curves fail for eccentric orbits)
-- Add more NEA targets (433 Eros, 3200 Phaethon, etc.)
+Next phase: Extract commands to lib/commands.py
 
-Changes:
-- terractl.py: +30 lines (NEA window calculations)
-- Context includes Sisyphus + Hephaistos windows
-- Space advisors can now recommend NEA vs Mars strategies
+Run tests:
+  pip install -r requirements-dev.txt
+  pytest

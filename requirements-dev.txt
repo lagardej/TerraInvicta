@@ -1,0 +1,9 @@
+# Terra Invicta Advisory System - Development Dependencies
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Future additions:
+# pytest-mock>=3.12.0  # For mocking
+# pytest-asyncio>=0.21.0  # If we add async code

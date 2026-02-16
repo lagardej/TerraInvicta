@@ -240,6 +240,22 @@ KOBOLDCPP_THREADS=8              # Match CPU cores
 
 ## Development
 
+### Running Tests
+
+```bash
+# Install test dependencies
+pip install -r requirements-dev.txt
+
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=lib --cov-report=html
+
+# Run specific test file
+pytest tests/test_launch_windows.py -v
+```
+
 ### Adding New Actor
 
 1. Create directory: `src/actors/newactor/`

@@ -19,6 +19,11 @@ import math
 from pathlib import Path
 from datetime import datetime, timedelta
 
+# Import extracted modules
+from lib.core import setup_logging, load_env, get_project_root
+from lib.performance import timed_command
+from lib.launch_windows import calculate_launch_windows
+
 # Python version check
 if sys.version_info < (3, 11):
     print("ERROR: Python 3.11+ required")
@@ -27,103 +32,16 @@ if sys.version_info < (3, 11):
     sys.exit(1)
 
 # ============================================================================
-# PERFORMANCE MONITORING
-# ============================================================================
-
-import time
-import functools
-
-def timed_command(func):
-    """Decorator to time command execution and log performance"""
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        command_name = func.__name__.replace('cmd_', '')
-        start_time = time.time()
-        
-        try:
-            result = func(*args, **kwargs)
-            elapsed = time.time() - start_time
-            
-            # Log to performance log
-            log_performance(command_name, elapsed, success=True)
-            
-            # Console output
-            if elapsed > 1.0:
-                logging.warning(f"Performance: {command_name} took {elapsed:.2f}s (threshold: 1.0s)")
-            else:
-                logging.debug(f"Performance: {command_name} completed in {elapsed:.3f}s")
-            
-            return result
-            
-        except Exception as e:
-            elapsed = time.time() - start_time
-            log_performance(command_name, elapsed, success=False, error=str(e))
-            raise
-    
-    return wrapper
-
-def log_performance(command: str, elapsed: float, success: bool = True, error: str = None):
-    """Append performance metrics to performance log"""
-    log_dir = Path(__file__).parent / "logs"
-    log_dir.mkdir(exist_ok=True)
-    perf_log = log_dir / "performance.log"
-    
-    timestamp = datetime.now().isoformat()
-    status = "SUCCESS" if success else "FAILED"
-    
-    with open(perf_log, 'a') as f:
-        if error:
-            f.write(f"{timestamp},{command},{elapsed:.3f},{status},{error}\n")
-        else:
-            f.write(f"{timestamp},{command},{elapsed:.3f},{status}\n")
-
-# ============================================================================
 # LOGGING SETUP
 # ============================================================================
 
-def setup_logging(verbosity: int):
-    """Configure logging based on verbosity level"""
-    levels = {
-        0: logging.WARNING,
-        1: logging.INFO,
-        2: logging.DEBUG
-    }
-    level = levels.get(verbosity, logging.DEBUG)
-    
-    log_dir = Path(__file__).parent / "logs"
-    log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / "terractl.log"
-    
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file, mode='a'),
-            logging.StreamHandler()
-        ]
-    )
+# (Moved to lib/core.py - imported above)
 
 # ============================================================================
 # ENVIRONMENT
 # ============================================================================
 
-def load_env():
-    """Load .env file"""
-    env_path = Path(__file__).parent / ".env"
-    env = {}
-    
-    if not env_path.exists():
-        logging.error(".env not found. Copy .env.dist to .env")
-        sys.exit(1)
-    
-    with open(env_path) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                env[key.strip()] = value.strip()
-    
-    return env
+# (Moved to lib/core.py - imported above)
 
 # ============================================================================
 # INSTALL COMMAND
@@ -676,82 +594,10 @@ def cmd_parse(args):
     print(f"\n[OK] Parse complete: {db_path.name} ({db_size:.1f}MB, {len(gamestates)} keys)")
 
 # ============================================================================
-# LAUNCH WINDOW CALCULATIONS
-# ============================================================================
-
-def calculate_launch_windows(game_date: datetime, templates_file: Path) -> dict:
-    """Calculate launch windows for major targets using known synodic periods"""
-    import json
-    
-    if not templates_file.exists():
-        logging.warning(f"Templates file not found: {templates_file}")
-        return {}
-    
-    # Load templates
-    with open(templates_file, encoding='utf-8') as f:
-        templates_data = json.load(f)
-    
-    # Known optimal windows (from game verification)
-    # Mars windows repeat every 780 days
-    mars_base_window = datetime(2026, 11, 13)  # Known optimal
-    mars_synodic = 780  # days
-    
-    # NEA windows (Near-Earth Asteroids)
-    sisyphus_base_window = datetime(2027, 8, 2)
-    sisyphus_synodic = 592  # days
-    
-    hephaistos_base_window = datetime(2027, 8, 1)
-    hephaistos_synodic = 533  # days
-    
-    results = {}
-    
-    # Calculate Mars window
-    days_since_base = (game_date - mars_base_window).days
-    cycles_passed = days_since_base / mars_synodic
-    next_cycle = math.ceil(cycles_passed)
-    next_mars_window = mars_base_window + timedelta(days=next_cycle * mars_synodic)
-    days_to_mars = (next_mars_window - game_date).days
-    
-    # Mars penalty (calibrated)
-    days_from_optimal = min(days_to_mars, mars_synodic - days_to_mars)
-    normalized = days_from_optimal / (mars_synodic / 2.0)
-    mars_penalty = 40.0 * (normalized ** 0.5)
-    
-    results['Mars'] = {
-        'next_window': next_mars_window.strftime('%Y-%m-%d'),
-        'days_away': days_to_mars,
-        'current_penalty': int(mars_penalty)
-    }
-    
-    # Calculate Sisyphus window (NEA - no penalty yet)
-    days_since_sis = (game_date - sisyphus_base_window).days
-    cycles_sis = days_since_sis / sisyphus_synodic
-    next_cycle_sis = math.ceil(cycles_sis)
-    next_sis_window = sisyphus_base_window + timedelta(days=next_cycle_sis * sisyphus_synodic)
-    days_to_sis = (next_sis_window - game_date).days
-    
-    results['Sisyphus'] = {
-        'next_window': next_sis_window.strftime('%Y-%m-%d'),
-        'days_away': days_to_sis
-    }
-    
-    # Calculate Hephaistos window (NEA - no penalty yet)
-    days_since_heph = (game_date - hephaistos_base_window).days
-    cycles_heph = days_since_heph / hephaistos_synodic
-    next_cycle_heph = math.ceil(cycles_heph)
-    next_heph_window = hephaistos_base_window + timedelta(days=next_cycle_heph * hephaistos_synodic)
-    days_to_heph = (next_heph_window - game_date).days
-    
-    results['Hephaistos'] = {
-        'next_window': next_heph_window.strftime('%Y-%m-%d'),
-        'days_away': days_to_heph
-    }
-    
-    return results
-
-# ============================================================================
 # INJECT COMMAND
 # ============================================================================
+
+# (launch_windows calculation moved to lib/launch_windows.py - imported above)
 
 def load_actors(src_dir: Path) -> dict:
     """Load actor specs"""
