@@ -6,7 +6,7 @@ LLM-powered advisory system for Terra Invicta campaign gameplay. Pause at Assign
 
 **Core workflow:**
 ```
-tias parse --date YYYY-MM-DD && tias inject --date YYYY-MM-DD && tias run --date YYYY-MM-DD
+tias parse --date YYYY-MM-DD && tias stage && tias preset --date YYYY-MM-DD && tias play --date YYYY-MM-DD
 ```
 
 ---
@@ -25,34 +25,38 @@ src/
 ├── core/               # Shared utilities (only package others may import)
 │   ├── core.py         # get_project_root(), load_env(), setup_logging()
 │   └── date_utils.py   # parse_flexible_date() → (datetime, ISO string)
-├── build/              # Build game templates DB
+├── load/               # Import game templates into SQLite
 ├── clean/              # Remove build/
 ├── install/            # Interactive setup wizard
 ├── parse/              # Savegame → SQLite
-├── inject/             # Game data → LLM context
+├── stage/              # Assemble actor context files at current tier
+├── preset/             # Actor contexts + game data → LLM context
 │   └── launch_windows.py  # Mars/NEA transfer window calculations
-├── run/                # Launch KoboldCpp
+├── play/               # Launch KoboldCpp
 ├── validate/           # Check config and paths
 └── perf/               # Performance tracking
     └── performance.py  # @timed_command decorator
 ```
 
-### Data Flow
+### Pipeline
 ```
 Terra Invicta install (read-only)
-    ↓ tias build
+    ↓ tias load
 build/templates/*.json + build/game_templates.db
 
 Savegame (.gz)
     ↓ tias parse
 build/savegame_YYYY-MM-DD.db
 
-Templates DB + Savegame DB
-    ↓ tias inject
+resources/actors/ + resources/prompts/ + tier_state.json
+    ↓ tias stage
+generated/context_*.txt (one per actor + system + codex)
+
+context_*.txt + Templates DB + Savegame DB
+    ↓ tias preset
 generated/mistral_context.txt
 
-Context file
-    ↓ tias run
+    ↓ tias play
 KoboldCpp (LLM server, localhost:5001)
 ```
 
@@ -86,21 +90,30 @@ KoboldCpp (LLM server, localhost:5001)
 ### Date Handling
 `parse_flexible_date(date_str)` returns `(datetime, iso_string)`:
 - `iso_string` = `YYYY-MM-DD` (with zero-padding) for DB filenames
-- Savegame glob uses `game_date.year}-{game_date.month}-{game_date.day}` (no padding, matches game files)
+- Savegame glob uses game format (YYYY-M-D, no padding) to match game files
 
 ### Path Resolution
 `get_project_root()` → `Path(__file__).parent.parent.parent` (from `src/core/core.py`)
 
 ### Performance Tracking
 All commands decorated with `@timed_command` log to `logs/performance.log`.
-View with `tias perf`.
 
-### Build: Malformed Templates
-Game ships ~7 malformed JSON files. Build pipeline:
+### Load: Malformed Templates
+Game ships ~7 malformed JSON files. Load pipeline:
 1. Try `json.load()` - fast path
 2. On failure, try `_repair_json()` - strips `//` comments, trailing commas
-3. Still fails → collect in `skipped[]`, single warning at end
-4. Recovered files → `recovered[]`, logged at DEBUG only (`-vv`)
+3. Still fails → single warning at end (not one error per file)
+4. Recovered files → logged at DEBUG only (`-vv`)
+
+### Stage: Actor Context Assembly
+`tias stage` reads from `resources/actors/<n>/`:
+- `spec.toml` - identity, tier scopes, can/cannot discuss
+- `background.txt` - character history
+- `personality.txt` - voice and speech patterns (stub)
+- `stage.txt` - actor-specific stage directions (stub)
+- `examples_tier1/2/3.md` - example exchanges per tier (stub)
+
+Tier source: `generated/tier_state.json` (fallback: Tier 1, future: `tias evaluate`)
 
 ---
 
@@ -113,7 +126,7 @@ Game ships ~7 malformed JSON files. Build pipeline:
 - **Katya** - Military Doctrine & Ground Warfare
 - **CODEX** - Data archivist, emotionless state evaluator
 
-Actor data in `resources/actors/<name>/`: `spec.toml`, `background.txt`, `openers.csv`, `reactions.csv`
+Actor data in `resources/actors/<n>/`: spec.toml, background.txt, personality.txt, stage.txt, examples_tier*.md, openers.csv, reactions.csv
 
 ---
 
@@ -136,7 +149,7 @@ Key variables: `GAME_INSTALL_DIR`, `GAME_SAVES_DIR`, `KOBOLDCPP_DIR`, `KOBOLDCPP
 ```bash
 pytest                          # All tests
 pytest tests/core/              # Core utilities
-pytest tests/inject/            # Launch windows
+pytest tests/preset/            # Launch windows
 pytest --cov=src                # With coverage
 ```
 
@@ -145,22 +158,31 @@ Test structure mirrors `src/` structure.
 ---
 
 ## What's Working
-- All 8 commands functional: install, clean, build, validate, parse, inject, run, perf
+- All 9 commands: install, clean, load, validate, parse, stage, preset, play, perf
 - Flexible date input, ISO internal format
 - Malformed template recovery
 - Editable install (`tias` command available globally)
+- Stage command assembles per-actor context files at current tier
 - Full documentation: README, DEVELOPER_GUIDE, docs/
 
-## What's Planned (see FEATURES.md)
-- Tier-specific prompts
-- CODEX tier evaluation
-- Domain routing automation
-- Context extraction extensions
-- Auto-correction of truly unrecoverable templates
+## What's Next (see FEATURES.md)
+- Fill actor content files (personality.txt, stage.txt, examples_tier*.md)
+- CODEX tier evaluation (tias evaluate → tier_state.json)
+- Wire preset to consume context_*.txt from stage
+- Context extraction extensions (faction data, councilor roster)
+
+---
+
+## Command Vocabulary (Theatre Metaphor)
+- `tias load`    - Load game data into DB (load in the set)
+- `tias parse`   - Parse savegame (read the script)
+- `tias stage`   - Stage actors at current tier (stage the cast)
+- `tias preset`  - Combine contexts + game state (preset the scene)
+- `tias play`    - Launch KoboldCpp (curtain up)
 
 ---
 
 ## Session History
 See `.ai/cache/` for detailed session summaries.
 
-**Last Updated:** 2026-02-17 (Phase 2 complete)
+**Last Updated:** 2026-02-17 (Command renames: build→load, inject→preset, run→play)

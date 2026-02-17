@@ -1,5 +1,5 @@
 """
-Run command - Launch KoboldCpp with selected model quality
+Play command - Launch KoboldCpp with selected model quality
 """
 
 import logging
@@ -10,13 +10,13 @@ from pathlib import Path
 from src.core.core import load_env
 
 
-def cmd_run(args):
+def cmd_play(args):
     """Launch KoboldCpp"""
-    # Import inject here to avoid circular dependency
-    from inject.command import cmd_inject
+    # Import preset here to avoid circular dependency
+    from src.preset.command import cmd_preset
 
     # Generate context first
-    cmd_inject(args)
+    cmd_preset(args)
 
     env = load_env()
     kobold_dir = env.get('KOBOLDCPP_DIR')
@@ -50,7 +50,6 @@ def cmd_run(args):
     if not kobold_exe.exists():
         kobold_exe = Path(kobold_dir) / "koboldcpp"  # Linux
 
-    # Build command with GPU backend selection
     cmd = [
         str(kobold_exe),
         "--model", model_path,
@@ -59,7 +58,6 @@ def cmd_run(args):
         "--threads", threads
     ]
 
-    # Add GPU backend
     if gpu_backend == 'clblast':
         cmd.append("--useclblast")
     elif gpu_backend == 'vulkan':
@@ -67,7 +65,6 @@ def cmd_run(args):
     elif gpu_backend == 'cublas':
         cmd.append("--usecublas")
 
-    # Add GPU layers
     if gpu_layers:
         cmd.extend(["--gpulayers", gpu_layers])
 

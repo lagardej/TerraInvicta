@@ -1,5 +1,5 @@
 """
-Inject command - Generate LLM context from game data
+Preset command - Combine actor contexts and game state into final LLM context
 """
 
 import logging
@@ -9,12 +9,12 @@ from pathlib import Path
 
 from src.core.core import get_project_root
 from src.core.date_utils import parse_flexible_date
-from src.inject.launch_windows import calculate_launch_windows
+from src.preset.launch_windows import calculate_launch_windows
 from src.perf.performance import timed_command
 
 
-def load_actors(resources_dir: Path) -> dict:
-    """Load actor specs"""
+def load_actor_specs(resources_dir: Path) -> dict:
+    """Load actor specs from TOML"""
     import tomllib
 
     actors = {}
@@ -37,28 +37,28 @@ def load_actors(resources_dir: Path) -> dict:
 
 
 @timed_command
-def cmd_inject(args):
-    """Generate LLM context"""
+def cmd_preset(args):
+    """Combine actor contexts and game state into final LLM context"""
     project_root = get_project_root()
 
     game_date, iso_date = parse_flexible_date(args.date)
 
-    templates_db = project_root / "build" / "game_templates.db"
-    savegame_db = project_root / "build" / f"savegame_{iso_date}.db"  # ISO: 2027-08-01
+    templates_db  = project_root / "build" / "game_templates.db"
+    savegame_db   = project_root / "build" / f"savegame_{iso_date}.db"
     templates_file = project_root / "build" / "templates" / "TISpaceBodyTemplate.json"
-    output_file = project_root / "generated" / "mistral_context.txt"
+    output_file   = project_root / "generated" / "mistral_context.txt"
     output_file.parent.mkdir(exist_ok=True)
 
     if not templates_db.exists():
-        logging.error("Templates DB missing. Run: tias build")
+        logging.error("Templates DB missing. Run: tias load")
         return 1
 
     if not savegame_db.exists():
         logging.error(f"Savegame DB missing. Run: tias parse --date {args.date}")
         return 1
 
-    logging.info("Loading actors...")
-    actors = load_actors(project_root / "resources")
+    logging.info("Loading actor specs...")
+    actors = load_actor_specs(project_root / "resources")
 
     logging.info("Calculating launch windows...")
     launch_windows = calculate_launch_windows(game_date, templates_file)
@@ -115,7 +115,7 @@ def cmd_inject(args):
 
     size = output_file.stat().st_size / 1024
     logging.info("=" * 60)
-    logging.info(f"[OK] Context generated: {output_file.name}")
+    logging.info(f"[OK] Context preset: {output_file.name}")
     logging.info(f"  Size: {size:.1f}KB")
     logging.info(f"  Actors: {len(actors)}")
-    print(f"\n[OK] Context ready: {output_file} ({size:.1f}KB)")
+    print(f"\n[OK] Preset complete: {output_file} ({size:.1f}KB)")

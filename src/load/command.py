@@ -1,5 +1,5 @@
 """
-Build command - Create templates database from game files
+Load command - Import game templates into SQLite database
 """
 
 import csv
@@ -63,8 +63,8 @@ def merge_localization(data, localizations: dict):
         return data
 
 
-def build_actors(resources_dir: Path, build_dir: Path) -> dict:
-    """Build actor JSON files from TOML/CSV"""
+def load_actors(resources_dir: Path, build_dir: Path) -> dict:
+    """Load actor JSON files from TOML/CSV"""
     import tomllib
 
     actors_rsrc = resources_dir / "actors"
@@ -127,8 +127,8 @@ def _repair_json(text: str) -> str:
     return text
 
 
-def build_templates(game_dir: Path, build_dir: Path) -> dict:
-    """Build templates with localization"""
+def load_templates(game_dir: Path, build_dir: Path) -> dict:
+    """Load and localize game templates"""
     templates_rsrc = game_dir / "TerraInvicta_Data/StreamingAssets/Templates"
     loc_dir = game_dir / "TerraInvicta_Data/StreamingAssets/Localization/en"
     templates_build = build_dir / "templates"
@@ -312,8 +312,8 @@ def create_templates_db(build_dir: Path, templates_dir: Path):
 
 
 @timed_command
-def cmd_build(args):
-    """Build game templates database"""
+def cmd_load(args):
+    """Import game templates into SQLite database"""
     env = load_env()
 
     project_root = get_project_root()
@@ -324,20 +324,20 @@ def cmd_build(args):
     # Ensure build directory exists
     build_dir.mkdir(exist_ok=True)
 
-    logging.info("Building actors...")
-    actor_files = build_actors(resources_dir, build_dir)
-    logging.info(f"Built {len(actor_files)} actors")
+    logging.info("Loading actors...")
+    actor_files = load_actors(resources_dir, build_dir)
+    logging.info(f"Loaded {len(actor_files)} actors")
 
-    logging.info("Building templates...")
-    template_files = build_templates(game_dir, build_dir)
-    logging.info(f"Built {len(template_files)} templates")
+    logging.info("Loading templates...")
+    template_files = load_templates(game_dir, build_dir)
+    logging.info(f"Loaded {len(template_files)} templates")
 
     logging.info("Creating database...")
     create_templates_db(build_dir, build_dir / "templates")
 
     logging.info("=" * 60)
-    logging.info(f"[OK] Build complete: {len(actor_files) + len(template_files)} files")
+    logging.info(f"[OK] Load complete: {len(actor_files) + len(template_files)} files")
     logging.info(f"  Actors: {len(actor_files)}")
     logging.info(f"  Templates: {len(template_files)}")
     logging.info(f"  Database: {build_dir / 'game_templates.db'}")
-    print(f"\n[OK] Build complete: {len(actor_files) + len(template_files)} files")
+    print(f"\n[OK] Load complete: {len(actor_files) + len(template_files)} files")

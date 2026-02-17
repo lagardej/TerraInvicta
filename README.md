@@ -77,10 +77,10 @@ This will:
 - Set GPU backend (vulkan/clblast)
 - Create `.env` file
 
-### Build Game Templates
+### Load Game Templates
 
 ```bash
-tias build
+tias load
 ```
 
 This extracts and indexes game data from Terra Invicta installation.
@@ -91,16 +91,20 @@ This extracts and indexes game data from Terra Invicta installation.
 # Parse a savegame
 tias parse --date 2027-7-14
 
-# Generate LLM context
-tias inject --date 2027-7-14
+# Stage actor contexts
+tias stage
 
-# Launch KoboldCpp with context
-tias run --date 2027-7-14
+# Generate LLM context
+tias preset --date 2027-7-14
+
+# Launch KoboldCpp
+tias play --date 2027-7-14
 
 # Or chain them together
 tias parse --date 2027-7-14 && \
-tias inject --date 2027-7-14 && \
-tias run --date 2027-7-14
+tias stage && \
+tias preset --date 2027-7-14 && \
+tias play --date 2027-7-14
 ```
 
 **Date formats supported:**
@@ -114,40 +118,42 @@ tias run --date 2027-7-14
 |---------|-------------|
 | `tias install` | Interactive setup wizard |
 | `tias clean` | Remove build directory |
-| `tias build` | Build game templates database |
+| `tias load` | Import game templates into SQLite database |
 | `tias validate` | Validate configuration |
 | `tias parse --date DATE` | Parse savegame to database |
-| `tias inject --date DATE` | Generate LLM context |
-| `tias run --date DATE` | Launch KoboldCpp |
+| `tias stage` | Assemble actor context files at current tier |
+| `tias preset --date DATE` | Combine actor contexts and game state |
+| `tias play --date DATE` | Launch KoboldCpp |
 | `tias perf` | Show performance statistics |
 
 See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for complete command reference.
 
 ## Common Workflows
 
-### Full Clean Build
+### Full Clean Load
 ```bash
-tias clean && tias build
+tias clean && tias load
 ```
 
 ### Complete Pipeline
 ```bash
 tias parse --date 2027-7-14 && \
-tias inject --date 2027-7-14 && \
-tias run --date 2027-7-14
+tias stage && \
+tias preset --date 2027-7-14 && \
+tias play --date 2027-7-14
 ```
 
 ### Quick Context Update
 ```bash
 # Skip parse if savegame unchanged
-tias inject --date 2027-7-14 && tias run --date 2027-7-14
+tias preset --date 2027-7-14 && tias play --date 2027-7-14
 ```
 
 ### Different Quality Tiers
 ```bash
-tias run --date 2027-7-14 --quality base      # Fast (Mistral 7B Q4)
-tias run --date 2027-7-14 --quality nuclear   # Better (Qwen 14B Q4)
-tias run --date 2027-7-14 --quality ludicrous # Best (Qwen 72B Q2)
+tias play --date 2027-7-14 --quality base      # Fast (Mistral 7B Q4)
+tias play --date 2027-7-14 --quality nuclear   # Better (Qwen 14B Q4)
+tias play --date 2027-7-14 --quality ludicrous # Best (Qwen 72B Q2)
 ```
 
 ## Development
@@ -159,11 +165,12 @@ TerraInvicta/
 ├── src/                    # Source code (Python package)
 │   ├── __main__.py        # Entry point (tias command)
 │   ├── core/              # Core utilities
-│   ├── build/             # Build command
+│   ├── load/              # Load command
 │   ├── clean/             # Clean command
 │   ├── parse/             # Parse command
-│   ├── inject/            # Inject command
-│   ├── run/               # Run command
+│   ├── stage/             # Stage command
+│   ├── preset/            # Preset command
+│   ├── play/              # Play command
 │   ├── validate/          # Validate command
 │   └── perf/              # Performance tracking
 ├── resources/             # Game data
@@ -184,7 +191,7 @@ pytest
 pytest --cov=src
 
 # Specific test file
-pytest tests/test_launch_windows.py
+pytest tests/preset/test_launch_windows.py
 
 # Verbose output
 pytest -v
@@ -196,9 +203,12 @@ pytest -v
 2. Add files:
    - `spec.toml` - Metadata
    - `background.txt` - Character background
+   - `personality.txt` - Voice and speech patterns
+   - `stage.txt` - Stage directions
+   - `examples_tier1/2/3.md` - Example exchanges
    - `openers.csv` - Conversation openers
    - `reactions.csv` - Response patterns
-3. Rebuild: `tias clean && tias build`
+3. Reload: `tias clean && tias load`
 
 See `resources/actors/_template/` for structure.
 
@@ -235,23 +245,6 @@ KOBOLDCPP_MODEL_RIDICULOUS=/path/to/qwen2.5-32b-q4.gguf
 KOBOLDCPP_MODEL_LUDICROUS=/path/to/qwen2.5-72b-q2.gguf
 ```
 
-## Features
-
-### Launch Window Calculations
-- Mars transfer windows with accurate penalty calculations (<1% error)
-- Near-Earth Asteroid (Sisyphus, Hephaistos) transfer windows
-- Synodic period verification
-
-### Performance Monitoring
-- Automatic command timing
-- Performance log: `logs/performance.log`
-- View stats: `tias perf`
-
-### Multi-Tier System
-- Tier 1: Basic operational advice
-- Tier 2: Strategic faction-level guidance  
-- Tier 3: Civilization-scale recommendations
-
 ## Troubleshooting
 
 ### Import Errors
@@ -269,21 +262,3 @@ Ensure Python scripts directory is in PATH:
 Check logs: `logs/performance.log`
 
 Run validation: `tias validate`
-
-## Contributing
-
-1. Create feature branch
-2. Add tests for new functionality
-3. Update documentation
-4. Run tests: `pytest`
-5. Submit PR
-
-## License
-
-[Your License Here]
-
-## Support
-
-- **Documentation:** [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
-- **Issues:** GitHub Issues
-- **Logs:** `logs/terractl.log`
