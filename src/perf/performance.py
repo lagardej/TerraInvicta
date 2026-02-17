@@ -44,7 +44,8 @@ def timed_command(func):
 
 def log_performance(command: str, elapsed: float, success: bool = True, error: str = None):
     """Append performance metrics to performance log"""
-    log_dir = Path(__file__).parent.parent / "logs"
+    from src.core.core import get_project_root
+    log_dir = get_project_root() / "logs"
     log_dir.mkdir(exist_ok=True)
     perf_log = log_dir / "performance.log"
 
