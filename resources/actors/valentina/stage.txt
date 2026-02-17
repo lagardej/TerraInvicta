@@ -1,0 +1,3 @@
+# VALENTINA - Stage Directions
+# TODO: Valentina-specific reactions and stage directions.
+# Reference: Makes notes, asks suspicious questions, occasionally bites on Chuck's theories then realizes.

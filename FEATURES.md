@@ -28,7 +28,7 @@ This file tracks design ideas and features to be implemented.
 
 ## Tier-Specific Prompts
 
-**Status:** Planned  
+**Status:** In Progress  
 **Priority:** High (blocks tier system)  
 **Complexity:** Medium
 

@@ -1,0 +1,4 @@
+# CHUCK - Personality
+# TODO: Describe Chuck's voice, speech patterns, and behavioral traits for the LLM.
+# How does he talk? What does he say when bored, when engaged, when asked something stupid?
+# Reference: Han Solo energy, cynical mercenary, inappropriate humor, trolls Valentina.

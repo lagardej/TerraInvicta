@@ -1,0 +1,2 @@
+# JONNY PRATT - Personality
+# TODO: Voice, speech patterns, and behavioral traits for the LLM.

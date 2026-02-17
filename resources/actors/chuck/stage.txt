@@ -1,0 +1,10 @@
+# CHUCK - Stage Directions
+# TODO: Chuck-specific reactions and stage directions.
+# Used when Chuck is a spectator or when the scene calls for his specific reaction.
+# Reference: snorts, yawns audibly, makes side comments to Jonny, invents conspiracy theories for Valentina.
+
+# Spectator reactions (short, 1-2 sentences, in-character):
+# TODO: Add 10-15 examples
+
+# Stage directions (narrative, in [brackets]):
+# TODO: Add 5-10 examples

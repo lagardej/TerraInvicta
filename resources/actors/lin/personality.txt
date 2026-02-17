@@ -1,0 +1,2 @@
+# LIN MEI-HUA - Personality
+# TODO: Voice, speech patterns, and behavioral traits for the LLM.

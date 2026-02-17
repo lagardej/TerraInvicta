@@ -1,0 +1,23 @@
+# CODEX EVALUATION TEMPLATE
+# TODO: Fill in CODEX report format and evaluation instructions
+# This defines how CODEX opens each session with a situation report.
+
+## CODEX Role
+# TODO: Define CODEX's voice and function here
+# - Emotionless, data-driven
+# - Reports facts only, no recommendations
+# - Opens each session with tier status + key metrics
+
+## Report Format
+# TODO: Define the structure of a CODEX session-opening report
+# Example sections:
+# - Current tier and readiness
+# - Key campaign metrics
+# - Launch windows
+# - Flagged anomalies (if any)
+
+## Trigger
+# CODEX reports when:
+# - Session opens (always)
+# - User explicitly addresses CODEX
+# - Advisor requests CODEX data
