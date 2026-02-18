@@ -1,0 +1,73 @@
+# TIAS Technical Design Document: Agentic Orchestration (V15)
+
+## 1. Storage & Portability
+* **Campaign Silos**: Every campaign is a self-contained `.db` file.
+* **Master Schema**: Standardized tables for Actors, State, Dialogue, and Decisions.
+* **Portable Assets**: Switching campaigns is a simple `sqlite3.connect(new_campaign_db)` operation.
+
+## 2. Multi-Stream Response Protocol
+* **[THOUGHT]**: Logic check + Tone Modulation (Pulled from local DB `actors` table).
+* **[ACTION]**: `FETCH` or `UPDATE` commands affecting the active campaign file.
+* **[CHAT]**: User-facing dialogue.
+
+## 3. Advanced Retrieval & Search
+* **FTS5 Integration**: Rapid historical retrieval via Full-Text Search on the `dialogue_history` and `scene_summaries` tables.
+* **Decision Check**: Python validates all `[ACTION]` blocks against the `decision_log` table before execution.
+
+## 4. Hardware & Fail-Safe
+* **Atomic Commits**: Every interaction is a transaction. LLM crashes never result in data loss.
+* **Context Snapshots**: Instead of pruning, the Orchestrator can "archive" old turns into a `historical_turns` table to clear VRAM while keeping data accessible for FTS5 queries.
+
+-----
+Infrastructure optimization suggestions 
+
+Given that you are running local 14B models on 16GB VRAM, the biggest bottleneck is the "Memory-Inference Seesaw"—the more memory you give the agents, the less VRAM is left for the model weights, leading to slower tokens or OOM crashes.
+
+Here are the high-level optimizations for the architecture:
+1. The "Thin-Client" Prompting Strategy
+
+Instead of sending the entire actor profile every turn, use the SQLite backbone to perform Just-In-Time (JIT) Prompting.
+
+    The Optimization: The actors table should store personality traits in fragments.
+
+    The Logic: If the user query is about "Combat," the Orchestrator queries the DB for actor_id = Chuck AND trait_category = 'Combat'.
+
+    The Result: You only inject the 50 tokens of relevant personality/expertise needed for that specific turn, rather than 500 tokens of his entire biography. This preserves the KV Cache and speeds up response time.
+
+2. Semantic Embedding for the "Ambiguity Gate"
+
+Since you are using Python, adding a lightweight embedding model (like all-MiniLM-L6-v2) to run on your CPU (saving VRAM for the 14B) can replace keyword matching.
+
+    The Optimization: Store a "Vector" of each advisor's expertise in a separate embeddings table in the SQLite file.
+
+    The Logic: When the user asks a question, Python performs a cosine similarity check between the query and the advisor vectors.
+
+    The Result: Much higher accuracy for the "Domain Refusal" logic. Lin will know to refer to Jonny for "Orbital Mechanics" even if the word "Space" isn't explicitly used.
+
+3. KV Cache Management (Context Shifting)
+
+The 14B model's speed is dictated by how often it has to "re-read" the system prompt.
+
+    The Optimization: Use Static Prefix Caching.
+
+    The Logic: Keep the "Global Rules" and "Orchestrator Instructions" at the very beginning of the prompt and never change them.
+
+    The Result: In backends like Llama.cpp or KoboldCpp, this allows the model to "cache" the first few hundred tokens. New turns will generate almost instantly because the model only has to process the new dialogue, not the entire character sheet every time.
+
+4. Asynchronous "Thought" Generation
+
+If you want the "Round Table" to feel alive, use the Parallel Inference capabilities of modern backends (if your VRAM allows two small quants or a split load).
+
+    The Optimization: While the Primary Advisor is generating their [CHAT], a second, tiny model (like a 3B or 1B) can generate the "Spectator Heckles" or "Logic Validation" in the background.
+
+    The Result: Instant interjections without waiting for the 14B to finish its full cycle.
+
+5. Unified Schema Proposal (V16)
+
+To support these, your SQLite schema should look like this:
+Table	Purpose	Optimization
+actors	Static IDs and Metadata	Indexed for fast retrieval.
+persona_fragments	Split traits (Cynical, Greedy, etc.)	Pulled JIT to save tokens.
+dialogue_fts	Full-Text Search Virtual Table	Near-instant historical retrieval.
+session_state	Current State_ID and Session Vars	Ensures ACID compliance.
+decision_log	Boolean flags of "No-Go" topics	Prevents "Broken Record" syndrome.

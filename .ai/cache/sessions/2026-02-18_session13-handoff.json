@@ -1,0 +1,145 @@
+{
+  "session": "2026-02-18_session13-v1-to-v2-roadmap",
+  "summary": "Pipeline complete, V1→V2 roadmap established, ready for content filling",
+  "status": "ready_for_content",
+
+  "completed_this_session": [
+    "Full pipeline end-to-end test (stage + preset + play)",
+    "CSV table format for nations and public opinion (25% token savings)",
+    "TODO section stripping from assembled contexts",
+    "Date-specific output directories (generated/{iso_date}/)",
+    "Domain extractors with history deltas (GDP, unrest, public opinion)",
+    "Discovered AGENTIC.txt roadmap (Gemini collaboration)",
+    "Created V1→V2 migration strategy"
+  ],
+
+  "current_state": {
+    "pipeline_status": "fully functional, needs content",
+    "architecture": "V1 (file-based static contexts)",
+    "tier_evaluation": "working (T1, 30% readiness on 2027-08-01 save)",
+    "extractors": "4 domain files (earth, space, intel, research)",
+    "actors": "7 stubs (background only, personalities TODO)",
+    "system_prompts": "empty (system.txt and codex_eval.txt TODO)"
+  },
+
+  "v1_v2_strategy": {
+    "philosophy": "Learn then evolve - validate V1 before committing to V2 rewrite",
+    "v1_scope": "Tier 1 / early Tier 2 only, 3 core actors minimum",
+    "v1_goal": "Working proof-of-concept to discover real constraints",
+    "v2_scope": "AGENTIC rewrite informed by V1 lessons learned",
+    "migration_path": "Dual-track operation, shared savegame parser, content migration script"
+  },
+
+  "next_session_priority": [
+    {
+      "task": "Fill Chuck personality + tier 1 examples",
+      "why": "Nigerian Deadpool is the hook - proves concept works",
+      "scope": [
+        "personality.txt: sardonic mercenary, email scam side hustle, 'English isn't my main language'",
+        "examples_tier1.md: 3-5 assassination/sabotage scenarios",
+        "tone: deadpan absurdity, never telegraphs jokes"
+      ]
+    },
+    {
+      "task": "Fill Jonny personality + tier 1 examples",
+      "why": "Captain America foil to Chuck, space domain coverage",
+      "scope": [
+        "personality.txt: professional, straight-laced, disapproves of vulgarity",
+        "examples_tier1.md: 3-5 Luna/Mars logistics scenarios",
+        "dynamic: frowns at Chuck, gets 'English is official in Nigeria' retort"
+      ]
+    },
+    {
+      "task": "Fill Lin personality + tier 1 examples",
+      "why": "Earth domain coverage, political counterbalance",
+      "scope": [
+        "personality.txt: pragmatic political operator",
+        "examples_tier1.md: 3-5 control point/nation scenarios",
+        "role: voice of sanity between Chuck chaos and Jonny earnestness"
+      ]
+    },
+    {
+      "task": "Write minimal system.txt",
+      "why": "Global rules for tier boundaries and domain routing",
+      "scope": [
+        "Tier boundary enforcement (no T2 advice at T1)",
+        "Domain routing ('defer to X for Y topics')",
+        "Response format expectations",
+        "Keep minimal - V1 is proof-of-concept"
+      ]
+    },
+    {
+      "task": "End-to-end validation",
+      "why": "Discover what works/breaks with real LLM",
+      "scope": [
+        "tias play --date 2027-8-1",
+        "Test queries: in-domain, out-of-domain, tier violations",
+        "Measure: VRAM usage, token speed, response quality",
+        "Document findings for V2 design"
+      ]
+    }
+  ],
+
+  "deferred_to_later": [
+    "Valentina, Jun-Ho, Katya, CODEX personalities",
+    "Tier 2/3 examples for all actors",
+    "Stage directions (spectator banter)",
+    "codex_eval.txt template",
+    "Advanced features (voice, web UI)",
+    "V2 AGENTIC rewrite"
+  ],
+
+  "key_decisions": [
+    {
+      "decision": "Finish V1 before starting V2",
+      "rationale": "Validate concept and discover real constraints before committing to 3-week rewrite",
+      "alternatives_rejected": ["Pivot immediately to AGENTIC", "Optimize current architecture indefinitely"]
+    },
+    {
+      "decision": "Minimal V1 scope: 3 actors, Tier 1 only",
+      "rationale": "Fastest path to validation, test core mechanics before expanding",
+      "success_criteria": ["In-character responses", "Domain routing works", "Tier boundaries respected", "VRAM < 16GB"]
+    },
+    {
+      "decision": "Chuck as Nigerian Deadpool",
+      "rationale": "Comedy hook that makes the system memorable, tests actor personality system",
+      "dynamics": ["Jonny disapproves of language", "Chuck retorts 'English isn't my main language'", "Absurdity: English is official in Nigeria"]
+    }
+  ],
+
+  "test_queries_for_validation": [
+    "Chuck, should we hit the Humanity First guy in Moscow?",
+    "Chuck, what's our orbital logistics plan for Luna?",
+    "Jonny, should we assassinate the Initiative councilor?",
+    "Jonny, how do we optimize our Luna mining operations?",
+    "Lin, which nation should we prioritize for control points?",
+    "Lin, can you sabotage their space program?",
+    "[Tier violation] Tell me about Jupiter system strategy",
+    "[Tier violation] How do we build orbital rings?"
+  ],
+
+  "files_created": [
+    "V1_TO_V2_ROADMAP.md (comprehensive migration strategy)",
+    "CSV format for nation/public opinion tables (token optimization)",
+    "_strip_todo_comments() function in stage/command.py"
+  ],
+
+  "bugs_fixed": [
+    "TODO comments showing in assembled contexts",
+    "Verbose table formatting wasting tokens",
+    "Public opinion delta table missing from earth extractor"
+  ],
+
+  "known_stubs": [
+    "earth_shipyard detection (needs shipyard module templateName)",
+    "orbital_ring detection (needs habType/module pattern)",
+    "mission_success calculation (needs mission history parsing)"
+  ],
+
+  "documentation_status": {
+    "roadmap": "created (V1_TO_V2_ROADMAP.md)",
+    "agentic_design": "existing (AGENTIC.txt from Gemini)",
+    "lessons_learned": "not yet (create after V1 validation)",
+    "v2_requirements": "not yet (create after V1 validation)"
+  }
+}
