@@ -65,8 +65,7 @@ def write_earth(db_path: Path, out: Path, helpers: dict):
     )[:30]
 
     lines.append("## Nations")
-    lines.append(f"{'Nation':<32} {'GDP':>8}  {'Δ':>6}  {'Unrest':>6}  {'Δ':>6}  {'Demo':>5}  {'Nukes':>5}  Control Points")
-    lines.append("-" * 105)
+    lines.append("Nation,GDP,ΔGDP,Unrest,ΔUnrest,Demo,Nukes,Control Points")
 
     for n in major_nations:
         name    = n.get('displayName', '?')
@@ -84,16 +83,14 @@ def write_earth(db_path: Path, out: Path, helpers: dict):
         # Find nation key from nation_map
         nk = next((k for k, v in nation_map_data.items() if v is n), None)
         cp_summary = nation_cps.get(nk, {})
-        cp_str = '  '.join(f"{f}:{c}" for f, c in sorted(cp_summary.items()))
+        cp_str = ' '.join(f"{f}:{c}" for f, c in sorted(cp_summary.items()))
 
-        nukes_str = str(nukes) if nukes else '-'
-        gdp_d_str = f"{gdp_delta:+.1f}%" if abs(gdp_delta) > 0.01 else '-'
-        unrest_d_str = f"{unrest_delta:+.2f}" if abs(unrest_delta) > 0.01 else '-'
+        nukes_str = str(nukes) if nukes else '0'
+        gdp_d_str = f"{gdp_delta:+.1f}%" if abs(gdp_delta) > 0.01 else '0%'
+        unrest_d_str = f"{unrest_delta:+.2f}" if abs(unrest_delta) > 0.01 else '0'
         
         lines.append(
-            f"{name:<32} {gdp:>7.2f}T  {gdp_d_str:>6}  "
-            f"{unrest:>6.2f}  {unrest_d_str:>6}  "
-            f"{demo:>5.1f}  {nukes_str:>5}  {cp_str}"
+            f"{name},{gdp:.2f}T,{gdp_d_str},{unrest:.2f},{unrest_d_str},{demo:.1f},{nukes_str},{cp_str}"
         )
 
     # Public opinion summary for player-controlled nations with delta
@@ -102,8 +99,7 @@ def write_earth(db_path: Path, out: Path, helpers: dict):
                           for cp in all_cps if cp['Key']['value'] in cp_keys}
 
     lines += ["", "## Public Opinion (Player Nations)"]
-    lines.append(f"{'Nation':<32}  Resist    Δ      Destroy   Δ      Exploit   Δ      Undecided")
-    lines.append("-" * 95)
+    lines.append("Nation,Resist,ΔResist,Destroy,ΔDestroy,Exploit,ΔExploit,Undecided")
     for nk in sorted(player_nation_keys):
         n = nation_map_data.get(nk, {})
         if n.get('aggregateNation') or n.get('alienNation'):
@@ -111,7 +107,7 @@ def write_earth(db_path: Path, out: Path, helpers: dict):
         po = n.get('publicOpinion', {})
         po_hist = n.get('historyPublicOpinion', [])
         
-        # Deltas from 5 turns ago
+        # Deltas from 5 turns ago (expressed as percentage points)
         po_old = po_hist[-6] if len(po_hist) >= 6 else {}
         delta_resist = (po.get('Resist', 0) - po_old.get('Resist', 0)) * 100
         delta_destroy = (po.get('Destroy', 0) - po_old.get('Destroy', 0)) * 100
@@ -120,11 +116,11 @@ def write_earth(db_path: Path, out: Path, helpers: dict):
         
         name = n.get('displayName', '?')
         lines.append(
-            f"{name:<32}  "
-            f"{po.get('Resist',0):>6.0%}  {delta_resist:>+6.1f}  "
-            f"{po.get('Destroy',0):>7.0%}  {delta_destroy:>+6.1f}  "
-            f"{po.get('Exploit',0):>7.0%}  {delta_exploit:>+6.1f}  "
-            f"{po.get('Undecided',0):>8.0%}"
+            f"{name},"
+            f"{po.get('Resist',0):.0%},{delta_resist:+.1f}pp,"
+            f"{po.get('Destroy',0):.0%},{delta_destroy:+.1f}pp,"
+            f"{po.get('Exploit',0):.0%},{delta_exploit:+.1f}pp,"
+            f"{po.get('Undecided',0):.0%}"
         )
 
     # Federations

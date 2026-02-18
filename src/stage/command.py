@@ -354,6 +354,20 @@ def load_actor(actor_dir: Path) -> dict:
     return actor
 
 
+def _strip_todo_comments(text: str) -> str:
+    """Remove TODO comments and empty sections from text content."""
+    if not text:
+        return ''
+    lines = text.split('\n')
+    # Remove lines starting with # TODO or containing only # TODO
+    filtered = [line for line in lines if not line.strip().startswith('# TODO')]
+    result = '\n'.join(filtered).strip()
+    # If what remains is just comment headers or whitespace, return empty
+    if all(line.strip().startswith('#') or not line.strip() for line in result.split('\n')):
+        return ''
+    return result
+
+
 def assemble_actor_context(actor: dict, tier: int) -> str:
     """Assemble a single actor's context file for the given tier."""
     name         = actor.get('display_name', actor.get('name', 'Unknown'))
@@ -364,9 +378,9 @@ def assemble_actor_context(actor: dict, tier: int) -> str:
     err_domain   = actor.get('error_domain_mismatch', '')
     err_tier     = actor.get(f'error_out_of_tier_{tier}', '')
     background   = actor.get('background', '')
-    personality  = actor.get('personality', '')
-    stage_dirs   = actor.get('stage_directions', '')
-    examples     = actor.get(f'examples_tier{tier}', '')
+    personality  = _strip_todo_comments(actor.get('personality', ''))
+    stage_dirs   = _strip_todo_comments(actor.get('stage_directions', ''))
+    examples     = _strip_todo_comments(actor.get(f'examples_tier{tier}', ''))
 
     lines = [f"## {name}"]
     if domain:       lines += [f"Domain: {domain}", ""]
