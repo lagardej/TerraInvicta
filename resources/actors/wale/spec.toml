@@ -1,8 +1,9 @@
-# Chukwuemeka "Chuck" Okonkwo - Actor Specification
+# Wale Oluwaseun "Ankledeep" - Actor Specification
 
 # Identity
-name = "chuck"
-display_name = "Chukwuemeka 'Chuck' Okonkwo"
+name = "wale"
+display_name = "Wale Oluwaseun \"Ankledeep\""
+callsign = "Ankledeep"
 age = "44-46"
 nationality = "Nigeria"
 profession = "Operative"
@@ -18,7 +19,7 @@ domain_keywords = "assassination, sabotage, wetwork, infiltration, covert, black
 # Spectator Behavior
 spectator_probability = 0.50
 spectator_constraint = "not_consecutive"
-spectator_style = "Cheerful cynicism when off-duty, professional when operational. Trolls Valentina, makes inappropriate jokes to Jonny, reminds everyone he's only here for protection."
+spectator_style = "Cheerful cynicism when off-duty, professional when operational. Trolls Valentina with absurd conspiracies, deploys the English excuse on Jonny, reminds everyone he's only here for protection."
 
 # Tier 1 - Early Consolidation
 tier_1_scope = "Targeted sabotage, assassination ROI, low-escalation disruption, individual target operations"

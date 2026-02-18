@@ -1,0 +1,99 @@
+{
+  "session": "2026-02-18_session14-wale-character",
+  "summary": "Chuck renamed to Wale Oluwaseun 'Ankledeep', personality written, examples_tier1 written, all backgrounds updated",
+  "status": "wale_complete_pending_stage_and_tier2_3_examples",
+
+  "completed_this_session": [
+    "Name change: Chukwuemeka 'Chuck' Okonkwo → Wale Oluwaseun 'Ankledeep'",
+    "Callsign origin: Ankledeep (cannot swim, mission-critical weakness, never discussed)",
+    "Directory renamed: resources/actors/chuck/ → resources/actors/wale/",
+    "spec.toml updated: name, display_name, callsign field added",
+    "background.txt rewritten: Chuck→Wale throughout, callsign note added",
+    "personality.txt written from scratch: 4 registers, Jonny ritual, domain, relationships, limits",
+    "examples_tier1.md written: 5 examples + out-of-domain, full register range demonstrated",
+    "All other actor backgrounds updated: Chuck→Wale references corrected",
+    "Valentina background: 'gradually learning to recognize bullshit' → Cassandra dynamic (cannot dismiss anything)",
+    "Jonny background: both Chuck references corrected to Wale"
+  ],
+
+  "key_decisions": [
+    {
+      "decision": "Wale Oluwaseun as full name, Ankledeep as callsign",
+      "rationale": "Wale = phonetic near-match for Wade (Wilson/Deadpool), Oluwaseun = authentically Yoruba, Ankledeep = degraded Deadpool chain (Deathstroke→Deadpool→Ankledeep), cannot swim",
+      "reference_chain": "Deathstroke → Deadpool → Ankledeep"
+    },
+    {
+      "decision": "Four voice registers",
+      "rationale": "Street/professional (default), full vulgarity (operational), sanitized vulgarity (probabilistic, inconsistent), bureaucratic formal (weapon, not always)",
+      "key_constraint": "Formal register is NOT constant — boring if always on. Deployed when mood suits."
+    },
+    {
+      "decision": "The Jonny ritual",
+      "rationale": "Wale says something profane → Jonny reacts 40-60% of the time → Wale: 'English is not my first language. I apologize for any confusion.' Tissue-thin excuse, everyone knows, Wale knows they know, that's the joke. Jonny's silence is his only winning move."
+    },
+    {
+      "decision": "Aquaphobia as load-bearing, not comic",
+      "rationale": "Cannot swim. Mission-critical weakness. Never joked about. Callsign origin never acknowledged. 'Insertion vector' is his preferred euphemism for water-adjacent access. The deadpan is a performance everywhere except here."
+    },
+    {
+      "decision": "Domain register: Guild-influenced but not constant",
+      "rationale": "Discworld Assassins' Guild DNA — inhumation, fee structures, itemized invoices. But only when the mood takes him. 'It was a good day.' Not a permanent affectation."
+    },
+    {
+      "decision": "Valentina dynamic revised",
+      "rationale": "Not 'gradually learning to recognize his bullshit' — Cassandra cannot comfortably dismiss anything. Her track record of being right has broken her ability to filter. She investigates Wale's fake conspiracies because she cannot afford not to. Some turned out real. Neither acknowledges this."
+    },
+    {
+      "decision": "Wale/Katya peer respect",
+      "rationale": "Mutual, unspoken. She is one of the only people whose laughter he considers correctly calibrated. He finds Jonny's protectiveness of Katya baffling and offensive on her behalf. He would take a bullet for her. He would invoice the Resistance for the medical expenses."
+    }
+  ],
+
+  "character_state": {
+    "name": "Wale Oluwaseun",
+    "callsign": "Ankledeep",
+    "former_name": "Chukwuemeka 'Chuck' Okonkwo",
+    "files_complete": ["spec.toml", "background.txt", "personality.txt", "examples_tier1.md", "openers.csv", "reactions.csv"],
+    "files_todo": ["stage.txt", "examples_tier2.md", "examples_tier3.md"],
+    "priority_next": "stage.txt (spectator reactions, stage directions)"
+  },
+
+  "backgrounds_updated": [
+    "jonny/background.txt — Chuck→Wale (x2)",
+    "katya/background.txt — Chuck→Wale (x1)",
+    "valentina/background.txt — Chuck→Wale (x2), Cassandra dynamic corrected",
+    "jun-ho/background.txt — already clean, no Chuck references"
+  ],
+
+  "next_session_priority": [
+    {
+      "task": "Fill wale/stage.txt",
+      "scope": "Spectator reactions (10-15 short lines), stage directions (5-10 narrative beats)"
+    },
+    {
+      "task": "Move to Jonny personality.txt",
+      "scope": "Captain America energy, space domain, Pawnee perspective, Wale dynamic"
+    },
+    {
+      "task": "Move to Lin personality.txt",
+      "scope": "Pragmatic political operator, Clausewitz inversion, elder stateswoman"
+    },
+    {
+      "task": "Write minimal system.txt",
+      "scope": "Tier boundaries, domain routing, response format"
+    },
+    {
+      "task": "End-to-end validation",
+      "scope": "tias play --date 2027-8-1, test queries, VRAM check"
+    }
+  ],
+
+  "known_references": {
+    "Ankledeep_chain": "Deathstroke → Deadpool (Wade Wilson) → Ankledeep (Wale Oluwaseun, cannot swim)",
+    "Jonny_ritual": "English is not my first language. I apologize for any confusion.",
+    "George_of_the_Jungle": "Enormous sincere smile during broken English deflection. The smile does not waver. It has never wavered. It will not waver.",
+    "Discworld_Guild": "Inhumation, fee structures, itemized invoices — deployed occasionally, not constantly",
+    "Valentina_Cassandra": "Vindicated too late. Cannot dismiss anything. Investigates Wale's fake conspiracies. Some were real.",
+    "Ankledeep_stories": "When asked about callsign, tells a different story every time. Always plausible, always heroic, always shallow water as incidental setting never as threat. Never repeated. Never questioned twice. Real answer not available."
+  }
+}
