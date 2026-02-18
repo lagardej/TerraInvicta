@@ -1,25 +1,36 @@
-# TIAS Technical Design Document: Agentic Orchestration (V15)
+# TIAS Technical Design Document: Agentic Orchestration (V17)
 
-## 1. Storage & Portability
+## 1. Single Source of Truth (SSoT)
+* **The DB is the Universe**: All variables (Loyalty, Tier, Budget, Historical Decisions) reside in SQLite.
+* **The Code is the Observer**: Python has no "memory" of its own. It fetches the universe state at the start of every turn.
 * **Campaign Silos**: Every campaign is a self-contained `.db` file.
-* **Master Schema**: Standardized tables for Actors, State, Dialogue, and Decisions.
 * **Portable Assets**: Switching campaigns is a simple `sqlite3.connect(new_campaign_db)` operation.
 
-## 2. Multi-Stream Response Protocol
+## 2. Decision Logic (The "Thinking" Layer)
+* **Pre-Processing**: Python performs semantic scoring and expert redirection (Lin -> Jonny) based on DB-stored domain keywords.
+* **Prompt Synthesis**: Python assembles the prompt JIT (Just-In-Time) by joining Actor traits with current Game State.
+* **Post-Processing**: Python parses the [THOUGHT], [ACTION], and [CHAT] blocks, updating the DB tables accordingly.
+
+## 3. Multi-Stream Response Protocol
 * **[THOUGHT]**: Logic check + Tone Modulation (Pulled from local DB `actors` table).
 * **[ACTION]**: `FETCH` or `UPDATE` commands affecting the active campaign file.
 * **[CHAT]**: User-facing dialogue.
 
-## 3. Advanced Retrieval & Search
+## 4. Advanced Retrieval & Search
 * **FTS5 Integration**: Rapid historical retrieval via Full-Text Search on the `dialogue_history` and `scene_summaries` tables.
 * **Decision Check**: Python validates all `[ACTION]` blocks against the `decision_log` table before execution.
 
-## 4. Hardware & Fail-Safe
-* **Atomic Commits**: Every interaction is a transaction. LLM crashes never result in data loss.
+## 5. Robustness via Relational Integrity
+* **Atomic Turns**: Turn-based commits ensure that if the Python code or LLM fails, the DB state remains consistent.
+* **Constraint Enforcement**: SQLite foreign keys ensure that an [ACTION] cannot be logged for an actor that doesn't exist in the current campaign.
 * **Context Snapshots**: Instead of pruning, the Orchestrator can "archive" old turns into a `historical_turns` table to clear VRAM while keeping data accessible for FTS5 queries.
 
+## 6. Portability
+* **Stateless Code**: The Python orchestration engine can be updated or swapped without affecting the stored campaign progress.
+* **Campaign Isolation**: Each campaign is a `.db` file containing the full state history.
+
 -----
-Infrastructure optimization suggestions 
+Infrastructure optimization suggestions
 
 Given that you are running local 14B models on 16GB VRAM, the biggest bottleneck is the "Memory-Inference Seesaw"—the more memory you give the agents, the less VRAM is left for the model weights, leading to slower tokens or OOM crashes.
 
@@ -62,12 +73,13 @@ If you want the "Round Table" to feel alive, use the Parallel Inference capabili
 
     The Result: Instant interjections without waiting for the 14B to finish its full cycle.
 
-5. Unified Schema Proposal (V16)
+5. Unified Schema Proposal (V17)
 
 To support these, your SQLite schema should look like this:
-Table	Purpose	Optimization
-actors	Static IDs and Metadata	Indexed for fast retrieval.
-persona_fragments	Split traits (Cynical, Greedy, etc.)	Pulled JIT to save tokens.
-dialogue_fts	Full-Text Search Virtual Table	Near-instant historical retrieval.
-session_state	Current State_ID and Session Vars	Ensures ACID compliance.
-decision_log	Boolean flags of "No-Go" topics	Prevents "Broken Record" syndrome.
+Table             Purpose                              Optimization
+actors            Static IDs and Metadata              Indexed for fast retrieval.
+persona_fragments Split traits (Cynical, Greedy, etc.) Pulled JIT to save tokens.
+dialogue_fts      Full-Text Search Virtual Table       Near-instant historical retrieval.
+session_state     Current State_ID and Session Vars    Ensures ACID compliance.
+decision_log      Boolean flags of "No-Go" topics      Prevents "Broken Record" syndrome.
+embeddings        Domain expertise vectors             CPU-side semantic routing.
