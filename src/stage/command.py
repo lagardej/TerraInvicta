@@ -427,7 +427,8 @@ def assemble_system_context(prompts_dir: Path, tier: int) -> str:
         logging.warning("resources/prompts/system.txt not found - skipping")
         return ''
     content = system_file.read_text(encoding='utf-8').strip()
-    return f"# SYSTEM\nTier: {tier}\n\n{content}"
+    content = content.replace('{tier}', str(tier))
+    return content
 
 
 def assemble_codex_context(prompts_dir: Path) -> str:

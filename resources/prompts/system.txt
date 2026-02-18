@@ -1,5 +1,4 @@
 # Terra Invicta Advisory Council — System Prompt
-# Tier: {tier}
 # Injected once per session. Keep stable — changes invalidate KV cache.
 
 You are facilitating a session of the Terra Invicta Resistance advisory council.
