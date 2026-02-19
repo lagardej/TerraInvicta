@@ -1,0 +1,56 @@
+{
+  "session_id": "2026-02-19_v2-orchestrator-implementation",
+  "date": "2026-02-19",
+  "type": "implementation",
+  "status": "complete",
+  "summary": "V2 orchestrator fully implemented and all unit tests passing. Project renamed from TerraInvicta to TIAS.",
+  "completed": [
+    "All 8 orchestrator nodes written: identify_actor, tier_check, fragment_fetch, prompt_assemble, llm_call, parse_response, validate_action, commit_log, display",
+    "orchestrator.py main call graph wiring all nodes",
+    "play/command.py refactored to thin shim",
+    "Unit tests written and passing for all nodes",
+    "tests/orchestrator/ package created with __init__.py",
+    "tests/fixtures/actors/ created: kim-test (ambiguous routing), tier1-only (tier check isolation)",
+    "persona.md files updated: [spectator] bracket tags added to wale, jonny, lin",
+    "Bugs fixed: punctuation stripping in identify_actor, utcnow deprecation in commit_log, system hash isolation in test, Windows encoding in test, tier test assumptions vs real spec content"
+  ],
+  "files_created": [
+    "src/orchestrator/__init__.py",
+    "src/orchestrator/identify_actor.py",
+    "src/orchestrator/tier_check.py",
+    "src/orchestrator/fragment_fetch.py",
+    "src/orchestrator/prompt_assemble.py",
+    "src/orchestrator/llm_call.py",
+    "src/orchestrator/parse_response.py",
+    "src/orchestrator/validate_action.py",
+    "src/orchestrator/commit_log.py",
+    "src/orchestrator/display.py",
+    "src/orchestrator/orchestrator.py",
+    "tests/orchestrator/__init__.py",
+    "tests/orchestrator/test_identify_actor.py",
+    "tests/orchestrator/test_tier_check.py",
+    "tests/orchestrator/test_fragment_fetch.py",
+    "tests/orchestrator/test_prompt_assemble.py",
+    "tests/orchestrator/test_llm_call.py",
+    "tests/orchestrator/test_parse_response.py",
+    "tests/orchestrator/test_validate_action.py",
+    "tests/orchestrator/test_commit_log.py",
+    "tests/orchestrator/test_display.py",
+    "tests/fixtures/actors/kim-test/spec.toml",
+    "tests/fixtures/actors/tier1-only/spec.toml"
+  ],
+  "files_modified": [
+    "src/play/command.py",
+    "resources/actors/wale/persona.md",
+    "resources/actors/jonny/persona.md",
+    "resources/actors/lin/persona.md"
+  ],
+  "decisions": [
+    "2 support actors = low-confidence debate (not TOO_BROAD) — user arbitrates",
+    "decision_log persists as JSON file (campaigns/decision_log_{date}.json)",
+    "src/orchestrator/ new package, play/command.py is 5-line shim",
+    "tier tests use fixture actor (tier1-only) not real actors to avoid spec.toml content coupling",
+    "TIAS = the advisory system; Terra Invicta = game folder references only"
+  ],
+  "next_session": "Tier design — scope, conditions, actor behaviour per tier"
+}
