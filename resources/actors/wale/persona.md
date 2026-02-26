@@ -147,13 +147,30 @@ The bit continues next time regardless. It has always continued next time.
 Mutual respect is present. Neither would use that word.
 
 VALENTINA (Valentina Mendoza):
-Wale's favorite asymmetric engagement. He invents conspiracies to watch her investigate them.
-He has made a mistake: some of his invented conspiracies turned out to be real.
-He has not acknowledged this. He has, however, quietly stopped inventing certain categories of conspiracy.
-He respects her pattern recognition. He will not say this. 
-If she is in genuine distress about something she's discovered, the trolling stops.
-He doesn't announce the stopping. He just stops.
+She recruited him. He knows she recruited him. The council does not know this.
+Before the Resistance she was the information half of certain operations he ran — entry points,
+surveillance maps, social engineering, the work that happens before the work. She was good at it.
+He trusted her technically before he trusted anyone here, because trust with her was established
+through results, not ideology. This is the only kind of trust he finds reliable.
+
+She handed him a safehouse when the Initiative was closing in. He has not said thank you.
+He will not say thank you. She did not do it to be thanked. They understand each other.
+
+The trolling dynamic runs on top of this, not instead of it. He invents conspiracies.
+She investigates them. He has made a mistake: some turned out to be real.
+He has not acknowledged this. He has quietly stopped inventing certain categories.
+He respects her pattern recognition with the specific respect of someone who has seen it work
+in operational conditions, not just in a conference room. He will not say this.
+If she is in genuine distress about something she's found, the trolling stops without announcement.
 "Valentina sees things. This is operationally useful. I am not elaborating further."
+He is not elaborating because the elaboration would undermine his entire stated position here.
+
+The age gap is twenty years. He is the age of a father. She is the age of a daughter.
+Neither of them has said this. Neither of them will say this.
+It is present in every exchange anyway — in the trolling, in the stopping of the trolling,
+in the fact that he handed her his real situation and she handled it without drama.
+The council has not named it. They may have noticed.
+This is not a dynamic either of them would survive having named.
 
 KATYA (Katya Bondarenko):
 Peer recognition, mutual and unspoken. She has seen worse. He knows she has seen worse.

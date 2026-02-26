@@ -14,16 +14,27 @@
       "spectator_constraint": "not_consecutive"
     },
     "valentina": {
-      "domain": "Diplomacy",
-      "personality": "Former Ambassador, idealistic"
+      "name": "Valentina Mendoza",
+      "nickname": "Unity",
+      "domain": "Intelligence & Counter-Intelligence",
+      "nationality": "Colombia",
+      "age": "22-24",
+      "profession": "Hacker",
+      "traits": ["Conspiracy Theorist", "Suspicious", "Awareness", "Wealthy", "Idealist", "Computer Scientist"],
+      "personality": "Prodigy hacker, pseudonymous conspiracy blogger who was right. Wrote the Manifesto for Unity. Recruited Wale. The Resistance found her and she still doesn't know how."
     },
     "lin": {
       "domain": "Space/Engineering",
       "personality": "Aerospace engineer"
     },
     "jun-ho": {
-      "domain": "Military",
-      "personality": "Tactician"
+      "name": "Dariush Shirazi",
+      "domain": "Industrial & Energy Systems",
+      "nationality": "Iran (defector)",
+      "age": "47-49",
+      "profession": "Nuclear Physicist",
+      "traits": ["Enemy of the State", "Pacifist", "Physicist", "Project Manager", "Academic", "Family Ties"],
+      "personality": "Iranian nuclear physicist defector. Built the Iranian nuclear program. Pacifist who cannot resolve the contradiction that regime change — his only hope for his family — likely requires violence he refuses to contribute to."
     },
     "jonny": {
       "domain": "Space Science",

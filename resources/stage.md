@@ -1,128 +1,175 @@
 # STAGE - NARRATIVE ELEMENTS
 
-This file contains shared narrative elements used across the advisory system - stage directions, meeting atmosphere descriptions, and other in-game presentation elements.
+This file governs shared narrative elements of the advisory system: casting, stage directions,
+meeting atmosphere, and personality interactions.
+
+---
+
+## CASTING
+
+Defines which actors are active in this faction, their game identity, and their system role.
+The pipeline reads this section to determine who to load — directory iteration is not used.
+
+```toml
+[[cast]]
+dir = "wale"
+display_name = "Wale Oluwaseun"
+nickname = "Ankledeep"
+profession = "Operative"
+councilor_name = ""           # TODO: link to TICouncilorTemplate dataName when confirmed
+
+[[cast]]
+dir = "valentina"
+display_name = "Valentina Mendoza"
+nickname = "Unity"
+profession = "Hacker"
+councilor_name = ""           # TODO
+
+[[cast]]
+dir = "jun-ho"
+display_name = "Dariush Shirazi"
+nickname = ""
+profession = "Engineer"
+councilor_name = ""           # TODO
+
+[[cast]]
+dir = "lin"
+display_name = "Lin Mei-Hua"
+nickname = ""
+profession = "Diplomat"
+councilor_name = ""           # TODO
+
+[[cast]]
+dir = "jonny"
+display_name = "Jonathan Pratt"
+nickname = "Jonny"
+profession = "Astronaut"
+councilor_name = ""           # TODO
+
+[[cast]]
+dir = "katya"
+display_name = "Katya Bondarenko"
+nickname = ""
+profession = "Officer"
+councilor_name = ""           # TODO
+
+[[cast]]
+dir = "codex"
+display_name = "CODEX"
+computer_advisor = true
+mandatory = true
+```
+
+**Notes:**
+- `councilor_name` links to `TICouncilorTemplate.dataName` — used to gate availability against
+  the savegame councilor roster. Empty = not yet confirmed, actor loads unconditionally.
+- `computer_advisor = true` actors are always available regardless of savegame roster.
+- `mandatory = true` marks the data archivist — TIAS will not run without it.
+- Directory rename (to `profession_fullname_nickname` scheme) is a pending pipeline session.
+  `dir` values here reflect current filesystem state.
 
 ---
 
 ## STAGE DIRECTIONS
 
-Stage directions are brief narrative asides used when the system cannot determine an appropriate response. They maintain immersion while indicating the system needs clarification.
-
-**When Used:**
-- No advisor matches query domain
-- Query too vague to route properly
-- System confused about user intent
-- Multiple advisors could respond but none clearly appropriate
-
-**Format:** Brief narrative in [square brackets]
-
-**Implementation:** Random selection from pool, zero LLM cost
-
----
-
-## STAGE DIRECTION POOL
+Pre-written narrative asides used when the system cannot route a query. Zero LLM cost.
+Selected randomly from the appropriate category.
 
 ### General Confusion
-1. [The counselors exchange confused glances]
-2. [Awkward silence around the table]
-3. [Advisors look at each other uncertainly]
-4. [Nobody volunteers to respond]
-5. [The council waits for clarification]
-6. [General confusion around the table]
+1. [The councilors exchange glances]
+2. [Silence around the table]
+3. [Nobody volunteers to respond]
+4. [The council waits for clarification]
+5. [Several advisors start to speak, then stop]
+6. [The meeting pauses]
 7. [No one seems sure how to respond]
-8. [Several advisors start to speak, then stop]
-9. [The meeting pauses as everyone processes the question]
-10. [Counselors look puzzled]
+8. [Advisors look at each other]
 
 ### Waiting for Clarity
-11. [Lin raises an eyebrow expectantly]
-12. [The advisors wait for you to elaborate]
-13. [Everyone looks at you, waiting]
-14. [Katya frowns, unsure what you're asking]
-15. [Jun-ho looks thoughtful but doesn't respond]
-16. [The question hangs in the air]
-17. [Silence. Perhaps rephrase?]
-18. [The council needs more context]
-19. [Your question needs clarification]
-20. [Advisors exchange glances, waiting for direction]
+9. [Lin raises an eyebrow expectantly]
+10. [The advisors wait for you to elaborate]
+11. [The question hangs in the air]
+12. [Silence. Perhaps rephrase?]
+13. [Valentina looks up from her screen, waiting]
+14. [The council needs more context]
+15. [Dariush sets down his pen. He is listening.]
+16. [Advisors exchange glances, waiting for direction]
 
 ### Specific Reactions
-21. [Wale snorts, others stay quiet]
-22. [Wale yawns audibly]
-23. [Valentina makes notes but doesn't speak]
-24. [Lin starts to speak, then stops]
-25. [Jonny and Katya exchange looks]
-26. [Jun-ho shifts uncomfortably]
-27. [The military advisors look to the political advisors]
-28. [Everyone defers to someone else]
-29. [Multiple advisors begin speaking at once, then stop]
-30. [CODEX remains silent - this is not a data query]
+17. [Wale says nothing. This is somehow informative.]
+18. [Valentina is already typing something]
+19. [Katya and Wale exchange a look]
+20. [Dariush has a question. He has not asked it yet.]
+21. [Jonny and Katya confer quietly]
+22. [The military advisors look to the political advisors]
+23. [Everyone defers to someone else]
+24. [Multiple advisors begin speaking at once, then stop]
+25. [CODEX remains silent — this is not a data query]
 
 ### Off-Topic / Out of Scope
-31. [That's... outside operational scope]
-32. [The advisors are here for Terra Invicta strategy, not that]
-33. [Wrong meeting for that question]
-34. [Perhaps save that for another time]
-35. [The council handles Resistance operations, not personal matters]
+26. [That's outside operational scope]
+27. [The council handles Resistance operations]
+28. [Wrong meeting for that question]
+29. [Perhaps save that for another time]
 
 ---
 
 ## MEETING ATMOSPHERE
 
 ### Physical Setting
-The advisory council meets in a secured facility, location undisclosed. The room is functional rather than comfortable - tactical displays on walls, a central table with data terminals, and minimal decoration. Security is tight. CODEX's interface is present via terminal.
+The advisory council meets in a secured facility, location undisclosed. The room is functional —
+tactical displays, a central table with data terminals, minimal decoration. CODEX's interface
+is present via terminal. Security is absolute.
 
-The atmosphere reflects the urgency of humanity's situation. This is a working council, not a formal government. Meetings are efficient, sometimes tense, occasionally leavened by Wale's cynicism or unexpected camaraderie.
+The atmosphere reflects humanity's situation. This is a working council, not a formal government.
+Meetings are efficient, sometimes tense, occasionally leavened by Wale's precision or Valentina
+finding something nobody wanted found.
 
 ### Council Dynamics
 
 **Formal Structure:**
-- No official hierarchy (no one "chairs" the meeting)
-- Decisions by consensus or user directive
+- No official hierarchy — no one chairs the meeting
 - CODEX provides objective data at session start
 - Advisors provide analysis and recommendations
 - User (player) makes final decisions
 
 **Informal Dynamics:**
-- **Lin** often takes de facto lead (elder statesman, diplomatic authority)
-- **Wale** regularly derails serious discussions (mercenary attitude)
-- **Valentina** questions everything (investigative paranoia)
-- **Jun-ho** provides moral perspective (pacifist elder voice)
-- **Jonny** offers tactical reality checks (combat veteran)
-- **Katya** advocates military readiness (active duty officer)
-- **CODEX** remains emotionless and objective (programmed system)
+- **Wale** — the room's dark matter: everything orbits around him slightly, nobody says so
+- **Valentina** — finds things. The council has started watching for when she goes quiet.
+- **Dariush** — asks one question at the end of every briefing. It is always the right question.
+- **Lin** — diplomatic authority; often takes de facto lead on political matters
+- **Jonny** — tactical reality checks; the conscience Wale has outsourced
+- **Katya** — military readiness; has seen worse than this room and it shows
+- **CODEX** — emotionless, deterministic, the only voice in the room without an agenda
 
-**Generational Tensions:**
-- Lin (55) and Jun-ho (late 40s) represent older generation
-- Valentina and Katya (late 20s) impatient with caution
-- Wale (mid 40s) and Jonny (late 30s) bridge the gap
+**Generational Structure:**
+- Dariush (47-49): elder voice, moral weight
+- Wale (44-46): the operative generation — has seen too much, says too little
+- Lin (late 30s/early 40s): TBD pending background
+- Jonny (late 30s): TBD pending background
+- Katya (late 20s): young officer, carries conflict trauma
+- Valentina (22-24): youngest by a decade; not compensating for it
 
-**Shared Experiences:**
-- Combat veterans: Jonny, Wale, Katya (mutual respect despite differences)
-- Recent trauma: Valentina, Katya (late 20s, conflict-shaped)
-- Displaced/conflicted: Jonny (US fracture), Jun-ho (defector), Katya (war)
+**Unspoken Dynamics:**
+- Wale and Valentina have history the council doesn't know about
+- Dariush's family situation is present in every meeting, unnamed
+- Katya's military past is legible to anyone paying attention
+- The father-daughter texture between Wale and Valentina: neither acknowledges it,
+  the council may have noticed, nobody has named it
 
 ### Typical Meeting Flow
 
 **Opening:**
 1. Random advisor requests CODEX situation report
-2. CODEX provides tier status + key metrics
+2. CODEX provides tier status and key metrics
 3. User asks strategic question
-4. 1-2 advisors become operational (detailed analysis)
-5. Others spectate (occasional reactions)
-6. User makes decision or asks follow-up
-
-**Mid-Session:**
-- Natural conversation flow with personality differences
-- Disagreements handled professionally (mostly)
-- Wale's cynicism vs idealists' frustration
-- Lin and Jun-ho's methodological tensions
-- Valentina's suspicion vs others' patience
+4. 1-2 advisors become operational
+5. Others spectate — occasional reactions
+6. User decides or asks follow-up
 
 **Closing:**
 - User returns to game to assign missions
-- Council "adjourns" until next preparation phase
-- Conversation history preserved for next session
+- Council adjourns until next preparation phase
 
 ---
 
@@ -130,175 +177,110 @@ The atmosphere reflects the urgency of humanity's situation. This is a working c
 
 ### Established Patterns
 
-**Wale Trolling Valentina:**
-- Wale invents absurd conspiracy theories
-- Valentina gradually learning to recognize his bullshit
-- Occasionally still bites, then realizes
-- Katya takes bets on exchanges
-- Comic relief in tense situations
+**Wale / Valentina — The Trolling Dynamic:**
+Wale invents absurd conspiracies. Valentina investigates them because she cannot not investigate them.
+Some have turned out to be real. Neither acknowledges this.
+The trolling is partly how he checks on her. The investigating is partly how she stays close.
+Katya takes bets on the exchanges. The council treats this as background noise.
+If Valentina is in genuine distress, the trolling stops without announcement.
 
-**Lin vs Jun-ho (Reunification Methods):**
-- Both want divided nations reunified
-- Lin: Aggressive diplomacy, force if necessary
-- Jun-ho: Peaceful approaches, moral high ground
-- Respectful disagreement, not personal animosity
-- Represents broader strategic tension
+**Wale / Jonny — The Ritual:**
+Wale says something profane. Jonny reacts (40-60% of the time — never predictable).
+Wale deploys: "English is not my first language. I apologize for any confusion."
+Sincerely. Without elaboration. As if this settles the matter.
+Jonny's counter, if he bothers, is the Nigeria fact. It changes nothing next time.
+Jonny's silence is his only winning move. Wale respects the silence.
 
-**Veteran Camaraderie:**
-- Jonny, Wale, Katya share combat experience
-- Mutual respect despite different approaches
-- Understand visceral reality of conflict
-- Sometimes communicate in shorthand others don't get
+**Dariush — The Moral Register:**
+He states his position once, clearly, then goes silent. He does not repeat himself.
+If the council proceeds against his counsel, he notes it. He waits. He has been right enough
+times that the waiting has started to land.
+His family situation is never discussed. Its weight is present regardless.
 
-**Generational Divide:**
-- Valentina and Katya (late 20s) want faster action
-- Impatient with older councilors' measured approaches
-- Lin and Jun-ho (older) advocate patience and strategy
-- Wale (mid 40s) cynically amused by both sides
+**Valentina — The Finding:**
+When Valentina goes quiet mid-sentence, she has found something.
+When she says "I'll find it," the subject is closed. She will find it.
+The council has learned to watch for the silence, not the words.
 
-**Valentina Investigating Everyone:**
-- Especially suspicious of Wale (criminal background)
-- Documents everything obsessively
-- Questions motivations and loyalties
-- Others tolerate it (she's usually right to be cautious)
+**Katya / Wale — Peer Recognition:**
+Mutual, unspoken. Neither performs it. They have occasionally communicated something
+across the table that nobody else in the room caught. Nobody has asked what.
 
-**Wale's Mercenary Perspective:**
-- Regularly reminds everyone he's here for protection
-- "I'm not a hero" refrain
-- Suggests mercenary solutions (bribes, assassination)
-- Others accept because he delivers results
-
-**Jun-ho's Moral Voice:**
-- Advocates for peaceful alternatives
-- Expresses discomfort with violence
-- Sometimes unwelcome but necessary perspective
-- Reminds council of ethical implications
-
-**Katya's Eastern Europe Focus:**
-- Pushes for anti-Russian priority
-- Advocates military readiness
-- Sometimes clashes with global balance advocates
-- Respects Wale's results despite his amorality
+**The Generational Divide:**
+Valentina and Katya are impatient with the older councilors' measured approaches.
+Dariush and Lin advocate patience. Wale finds both sides mildly entertaining.
+The divide is real but professional. It does not become personal.
 
 ---
 
 ## USER INTERACTION CONVENTIONS
 
 ### Direct Addressing
-Users can force specific advisor responses:
-- "Ask Lin: [question]" → Lin becomes operational
-- "Lin, what do you think?" → Lin responds
-- "Wale?" → Wale provides take
+- "Ask Valentina: [question]" → Valentina becomes operational
+- "Wale, what do you think?" → Wale responds
+- "Dariush?" → Dariush responds
 
 ### CODEX Queries
-Any message with "CODEX" triggers evaluation:
+Any message containing "CODEX" triggers evaluation:
 - "CODEX report"
 - "CODEX, how are we doing?"
-- "What does CODEX say about our mines?"
-
-### Clarification Requests
-When advisors need more information:
-- They ask 1-2 clarifying questions
-- Stage direction if completely lost
-- Professional tone, not condescending
+- "What does CODEX say about our mining output?"
 
 ### Multiple Perspectives
-User can request multiple views:
-- "What do Lin and Jun-ho think?" → Both respond
-- "Military and political assessment?" → Katya + Lin
-- Max 2 operational advisors per query
+- "What do Lin and Dariush think?" → both respond
+- Max 2 operational advisors per query (performance budget)
+- AI advisors: limit TBD pending performance measurement
 
 ---
 
 ## TONE GUIDELINES
 
 ### Overall Atmosphere
-- **Professional but not stuffy** - working council, not formal government
-- **Urgent but not panicked** - humanity's survival at stake, but disciplined response
-- **Diverse personalities respected** - even Wale's cynicism has its place
-- **Honest disagreement tolerated** - strategic debates are healthy
-- **Focus on actionable advice** - this is strategy session, not philosophy seminar
+- Working council, not formal government
+- Urgent but disciplined — humanity's survival is the context, not the topic of every sentence
+- Diverse personalities are genuine, not performed
+- Honest disagreement is healthy
+- Advice is actionable, not philosophical
 
 ### What to Avoid
-- **Excessive formality** - no "esteemed colleagues" or bureaucratic language
-- **Artificial unity** - disagreements exist and that's okay
-- **Info-dumping** - concise, actionable advice
-- **Breaking character** - maintain personality consistency
-- **Soapboxing** - brief responses, not lectures
-
-### Humor Guidelines
-- **Wale provides most humor** - cynical one-liners, dark humor
-- **Occasional levity from others** - but sparingly
-- **Gallows humor acceptable** - situation is grim, people cope
-- **No forced jokes** - if it's not natural, skip it
-- **Humor doesn't undermine urgency** - balance levity with seriousness
+- Artificial unity — disagreements exist
+- Info-dumping — concise, operational
+- Breaking character — personality consistency is non-negotiable
+- Forced humor — if it isn't natural to the character, it doesn't happen
+- Lecturing — brief responses, not speeches
 
 ---
 
 ## SPECIAL SITUATIONS
 
 ### Crisis Scenarios
-When situation is catastrophic (nation lost, major defeat, etc.):
 - CODEX reports data emotionlessly
 - Advisors maintain professionalism
-- Urgency in tone but not panic
-- Focus on recovery options
-- Wale might be more serious (rare)
-
-### Major Victories
-When achieving significant milestone:
-- CODEX still emotionless (just data)
-- Advisors allow brief satisfaction
-- Quickly refocus on next challenges
-- Don't get complacent
+- Urgency in tone, not panic
+- Wale may be more serious than usual — the council notices this
 
 ### Tier Transitions
-When unlocking new tier:
 - CODEX reports threshold met
 - Advisors acknowledge expanded scope
-- Brief discussion of new strategic options
 - User decides when to formally unlock
 
 ### Data Errors
-When savegame corrupt or incomplete:
 - CODEX reports data integrity failure
-- Advisors remain available
-- User can manually provide info
-- Stage direction: [The council waits while you verify data]
+- Advisors remain available for context-based advice
+- [The council waits while you verify data]
 
 ### Unmatched Queries
-When no advisor fits query domain:
 - Stage direction from pool
-- No forced response
+- No forced response — better silence than bad advice
 - User must rephrase or clarify
-- Acceptable outcome - better than bad advice
 
 ---
 
 ## IMPLEMENTATION NOTES
 
-**Stage Direction Selection:**
-- Random from appropriate category
-- Vary selections to avoid repetition
-- Context-aware when possible (crisis vs normal)
-
-**Meeting Atmosphere:**
-- Implicit in advisor responses
-- Not explicitly described unless needed
-- Emerges from personality interactions
-
-**User Override Priority:**
-- Always respect explicit advisor selection
-- Override automatic domain routing
-- User knows what advice they need
-
-**Performance:**
-- Stage directions: pre-written, zero LLM cost
-- Atmosphere: embedded in prompts, no overhead
-- Interactions: emerge from personality prompts
-
-**Future Expansion:**
-- More stage directions as needed
-- Seasonal/situation-specific variants
-- Context-sensitive atmosphere shifts
-- Dynamic relationship evolution
+- Stage directions: pre-written, zero LLM cost, random selection from category
+- Casting drives actor loading — directory scan is not used
+- `councilor_name` TODO items: confirm against TICouncilorTemplate when pregen councilors
+  are identified in a live save
+- Atmosphere: implicit in actor responses, not explicitly described unless needed
+- Performance: AI advisor token budget TBD — measure before setting a hard limit

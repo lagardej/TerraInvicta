@@ -1,13 +1,13 @@
-# KIM JUN-HO - Actor Specification
+# DARIUSH SHIRAZI - Actor Specification
 
 # Identity
-first_name = "Jun-ho"
-family_name = "Kim"
+first_name = "Dariush"
+family_name = "Shirazi"
 nickname = ""
-display_name = "Kim Jun-ho"  # family-name-first per East Asian convention
+display_name = "Dariush Shirazi"
 age = "47-49"
-nationality = "North Korea (defector)"
-profession = "Engineer (Energy Systems)"
+nationality = "Iran (defector)"
+profession = "Engineer"
 
 # Traits
 traits = "Enemy of the State, Pacifist, Physicist, Project Manager, Academic, Family Ties"
